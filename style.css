@@ -39,10 +39,7 @@ body {
   overflow-x: hidden;
 }
 
-button {
-  cursor: pointer;
-  font-family: 'Cairo', sans-serif;
-}
+button { cursor: pointer; font-family: 'Cairo', sans-serif; }
 
 /* ═══════════════════════════════════════════════════
    📌 الشريط العلوي
@@ -142,13 +139,9 @@ button {
   gap: 8px;
 }
 
-.search-bar-row .search-wrapper {
-  flex: 1;
-}
+.search-bar-row .search-wrapper { flex: 1; }
 
-.search-wrapper {
-  position: relative;
-}
+.search-wrapper { position: relative; }
 
 .search-input {
   width: 100%;
@@ -196,7 +189,7 @@ button {
 .search-clear:hover { color: var(--danger); }
 .search-clear.show  { display: block; }
 
-/* زر الفلاتر */
+/* زر فلاتر */
 .btn-filter-toggle {
   flex-shrink: 0;
   display: flex;
@@ -271,13 +264,13 @@ button {
 }
 
 .filter-tag {
-  padding: 5px 13px;
+  padding: 6px 14px;
   background: var(--primary-light);
   color: var(--primary-dark);
   border: 1.5px solid #b2dfdb;
   border-radius: 20px;
   font-family: 'Cairo', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--tr);
@@ -294,6 +287,7 @@ button {
   background: var(--primary-dark);
   color: white;
   border-color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(18,140,126,0.3);
 }
 
 .btn-filter-reset {
@@ -313,11 +307,7 @@ button {
   gap: 4px;
 }
 
-.btn-filter-reset:hover {
-  background: var(--danger);
-  color: white;
-}
-
+.btn-filter-reset:hover { background: var(--danger); color: white; }
 .btn-filter-reset.hidden { display: none !important; }
 .btn-filter-reset:not(.hidden) { display: inline-flex; }
 
@@ -429,11 +419,7 @@ button {
   transition: all var(--tr);
 }
 
-.qty-btn:hover {
-  background: var(--primary-light);
-  color: var(--primary-dark);
-}
-
+.qty-btn:hover { background: var(--primary-light); color: var(--primary-dark); }
 .qty-btn:active { transform: scale(0.88); }
 
 .qty-input {
@@ -492,10 +478,7 @@ button {
   transition: all var(--tr);
 }
 
-.overlay.show {
-  opacity: 1;
-  visibility: visible;
-}
+.overlay.show { opacity: 1; visibility: visible; }
 
 /* ═══════════════════════════════════════════════════
    📖 اللوحات الجانبية
@@ -572,11 +555,7 @@ button {
 
 .panel-close:hover { background: rgba(255,255,255,0.35); }
 
-.panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px;
-}
+.panel-body { flex: 1; overflow-y: auto; padding: 14px; }
 
 .panel-footer {
   padding: 14px 16px;
@@ -601,10 +580,7 @@ button {
   margin-bottom: 12px;
 }
 
-.panel-empty p {
-  font-size: 1.05rem;
-  font-weight: 600;
-}
+.panel-empty p { font-size: 1.05rem; font-weight: 600; }
 
 .cart-item {
   background: var(--bg);
@@ -626,17 +602,9 @@ button {
   line-height: 1.4;
 }
 
-.cart-item-price {
-  font-size: 0.78rem;
-  color: var(--text-sec);
-  margin-bottom: 7px;
-}
+.cart-item-price { font-size: 0.78rem; color: var(--text-sec); margin-bottom: 7px; }
 
-.cart-item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.cart-item-row { display: flex; align-items: center; justify-content: space-between; }
 
 .qty-mini {
   display: flex;
@@ -675,11 +643,7 @@ button {
   background: white;
 }
 
-.cart-item-subtotal {
-  font-weight: 700;
-  color: var(--primary-dark);
-  font-size: 0.92rem;
-}
+.cart-item-subtotal { font-weight: 700; color: var(--primary-dark); font-size: 0.92rem; }
 
 .cart-item-del {
   position: absolute;
@@ -694,10 +658,7 @@ button {
   padding: 2px;
 }
 
-.cart-item-del:hover {
-  opacity: 1;
-  transform: scale(1.2);
-}
+.cart-item-del:hover { opacity: 1; transform: scale(1.2); }
 
 .cart-summary {
   display: flex;
@@ -716,10 +677,7 @@ button {
   margin-bottom: 12px;
 }
 
-.cart-grand-total .label {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
+.cart-grand-total .label { font-size: 0.95rem; font-weight: 600; }
 
 .cart-grand-total .amount {
   font-size: 1.25rem;
@@ -727,11 +685,7 @@ button {
   color: var(--primary-dark);
 }
 
-.cart-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
+.cart-actions { display: flex; flex-direction: column; gap: 7px; }
 
 .btn-whatsapp {
   width: 100%;
@@ -772,10 +726,7 @@ button {
   gap: 5px;
 }
 
-.btn-danger-outline:hover {
-  background: var(--danger);
-  color: white;
-}
+.btn-danger-outline:hover { background: var(--danger); color: white; }
 
 /* ═══════════════════════════════════════════════════
    📜 بطاقة الطلبية السابقة
@@ -801,17 +752,8 @@ button {
   gap: 8px;
 }
 
-.order-buyer-name {
-  font-weight: 700;
-  font-size: 0.92rem;
-  color: var(--text);
-}
-
-.order-meta {
-  font-size: 0.74rem;
-  color: var(--text-sec);
-  margin-top: 2px;
-}
+.order-buyer-name { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+.order-meta       { font-size: 0.74rem; color: var(--text-sec); margin-top: 2px; }
 
 .order-total {
   font-weight: 700;
@@ -823,11 +765,7 @@ button {
 
 .order-card-body { padding: 10px 14px; }
 
-.order-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
+.order-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 
 .order-table th {
   background: #f0f2f5;
@@ -838,12 +776,7 @@ button {
   border-bottom: 1px solid var(--border);
 }
 
-.order-table td {
-  padding: 5px 8px;
-  border-bottom: 1px dashed var(--border);
-  color: var(--text);
-}
-
+.order-table td { padding: 5px 8px; border-bottom: 1px dashed var(--border); color: var(--text); }
 .order-table tr:last-child td { border-bottom: none; }
 
 .order-notes {
@@ -880,10 +813,10 @@ button {
 .btn-order-resend { color: var(--primary-dark); border-color: var(--primary); }
 .btn-order-resend:hover { background: var(--primary-light); }
 
-.btn-order-img { color: #8e44ad; border-color: #8e44ad; }
+.btn-order-img   { color: #8e44ad; border-color: #8e44ad; }
 .btn-order-img:hover { background: #f5eef8; }
 
-.btn-order-del { color: var(--danger); border-color: var(--danger); }
+.btn-order-del   { color: var(--danger); border-color: var(--danger); }
 .btn-order-del:hover { background: var(--danger); color: white; }
 
 /* ═══════════════════════════════════════════════════
@@ -935,28 +868,14 @@ button {
   gap: 7px;
 }
 
-.modal-x {
-  background: none;
-  border: none;
-  font-size: 1.3rem;
-  color: var(--text-sec);
-  padding: 3px;
-  transition: color var(--tr);
-}
-
+.modal-x { background: none; border: none; font-size: 1.3rem; color: var(--text-sec); padding: 3px; transition: color var(--tr); }
 .modal-x:hover { color: var(--danger); }
 
 .modal-body { padding: 18px 22px; }
 
 .form-group { margin-bottom: 15px; }
 
-.form-group label {
-  display: block;
-  font-weight: 700;
-  font-size: 0.88rem;
-  margin-bottom: 5px;
-}
-
+.form-group label { display: block; font-weight: 700; font-size: 0.88rem; margin-bottom: 5px; }
 .form-group label .req { color: var(--danger); margin-right: 2px; }
 
 .form-group input,
@@ -983,11 +902,7 @@ button {
 .err-msg { color: var(--danger); font-size: 0.78rem; margin-top: 4px; display: none; }
 .err-msg.show { display: block; }
 
-.modal-foot {
-  padding: 14px 22px 18px;
-  display: flex;
-  gap: 9px;
-}
+.modal-foot { padding: 14px 22px 18px; display: flex; gap: 9px; }
 
 .btn-primary {
   flex: 1;
@@ -1005,7 +920,7 @@ button {
   gap: 6px;
 }
 
-.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:hover  { background: var(--primary-dark); }
 .btn-primary:active { transform: scale(0.97); }
 
 .btn-secondary {
@@ -1055,15 +970,8 @@ button {
 .confirm-overlay.show .confirm-box { transform: scale(1); }
 
 .confirm-icon { font-size: 2.8rem; display: block; margin-bottom: 12px; }
-
 .confirm-box h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
-
-.confirm-box p {
-  font-size: 0.88rem;
-  color: var(--text-sec);
-  margin-bottom: 20px;
-  line-height: 1.6;
-}
+.confirm-box p  { font-size: 0.88rem; color: var(--text-sec); margin-bottom: 20px; line-height: 1.6; }
 
 .confirm-btns { display: flex; gap: 10px; justify-content: center; }
 
