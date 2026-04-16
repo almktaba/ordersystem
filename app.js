@@ -116,7 +116,7 @@ function loadProducts() {
 function initUI() {
   document.getElementById("storeName").textContent = storeData.storeName;
   document.title = storeData.storeName;
-  document.getElementById("footer").textContent =
+  document.getElementById("footerText").textContent =
     storeData.storeName + " - نظام الطلبيات - " + new Date().getFullYear();
 
   renderProducts();

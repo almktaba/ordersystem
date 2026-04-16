@@ -9,9 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
         rel="stylesheet">
 
-  <!-- jsPDF — لإنشاء PDF حقيقي بدون نافذة طباعة -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <!-- ملف الإعدادات والمنتجات -->
   <script src="products.js"></script>
 
@@ -29,35 +26,28 @@
       <div class="store-title" id="storeName">جارٍ التحميل...</div>
 
       <div class="header-tools">
-        <button class="btn-clear-data" onclick="confirmClearAllData()">
-          🗑️ <span>مسح البيانات</span>
-        </button>
-        <button class="icon-btn" onclick="toggleHistory()">
-          📋
-          <span class="badge hidden" id="historyBadge">0</span>
-        </button>
-        <span class="cart-total-header" id="cartTotalHeader">0.00</span>
-        <button class="icon-btn" onclick="toggleCart()">
-          🛒
-          <span class="badge hidden" id="cartBadge">0</span>
-        </button>
+        <a class="btn-wa-group" href="https://chat.whatsapp.com/HDxgTtrJfb2FGRulY26YiB"
+           target="_blank" title="انضم لمجموعة الواتساب">
+          💬 <span>انضم للمجموعة</span>
+        </a>
       </div>
 
     </div>
   </header>
 
-  <!-- البحث -->
-  <div class="search-container">
-    <div class="search-wrapper">
-      <span class="search-icon">🔍</span>
-      <input type="text" class="search-input" id="searchInput"
-             placeholder="ابحث عن منتج..." autocomplete="off">
-      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+  <!-- البحث الثابت -->
+  <div class="search-sticky">
+    <div class="search-container">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="ابحث عن منتج..." autocomplete="off">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      </div>
     </div>
+    <!-- عدد النتائج -->
+    <div class="results-info" id="resultsInfo"></div>
   </div>
-
-  <!-- عدد النتائج -->
-  <div class="results-info" id="resultsInfo"></div>
 
   <!-- شبكة المنتجات -->
   <main class="products-container">
@@ -70,7 +60,12 @@
   </main>
 
   <!-- التذييل -->
-  <footer class="footer" id="footer"></footer>
+  <footer class="footer" id="footer">
+    <div class="footer-phone">
+      📞 <a href="tel:+201274806845">01274806845</a>
+    </div>
+    <div class="footer-text" id="footerText"></div>
+  </footer>
 
   <!-- خلفية معتمة -->
   <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
@@ -142,6 +137,29 @@
 
   <!-- Toast -->
   <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- الأزرار العائمة -->
+  <div class="fab-group">
+
+    <!-- زر مسح البيانات -->
+    <button class="fab fab-danger" onclick="confirmClearAllData()" title="مسح البيانات">
+      🗑️
+    </button>
+
+    <!-- زر الطلبيات السابقة -->
+    <button class="fab fab-history" onclick="toggleHistory()" title="الطلبيات السابقة">
+      📋
+      <span class="badge hidden" id="historyBadge">0</span>
+    </button>
+
+    <!-- زر السلة العائم -->
+    <button class="fab fab-cart" onclick="toggleCart()" title="سلة المشتريات">
+      🛒
+      <span class="badge hidden" id="cartBadge">0</span>
+      <span class="fab-cart-total" id="cartTotalHeader">0.00</span>
+    </button>
+
+  </div>
 
   <!-- JavaScript الرئيسي -->
   <script src="app.js"></script>
