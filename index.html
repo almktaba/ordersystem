@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام الطلبيات</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+  <!-- jsPDF — لإنشاء PDF حقيقي بدون نافذة طباعة -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- ملف الإعدادات والمنتجات -->
+  <script src="products.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- شريط التنبيه -->
+  <div class="alert-bar" id="alertBar"></div>
+
+  <!-- الشريط العلوي -->
+  <header class="header">
+    <div class="header-content">
+
+      <div class="store-title" id="storeName">جارٍ التحميل...</div>
+
+      <div class="header-tools">
+        <button class="btn-clear-data" onclick="confirmClearAllData()">
+          🗑️ <span>مسح البيانات</span>
+        </button>
+        <button class="icon-btn" onclick="toggleHistory()">
+          📋
+          <span class="badge hidden" id="historyBadge">0</span>
+        </button>
+        <span class="cart-total-header" id="cartTotalHeader">0.00</span>
+        <button class="icon-btn" onclick="toggleCart()">
+          🛒
+          <span class="badge hidden" id="cartBadge">0</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- البحث -->
+  <div class="search-container">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput"
+             placeholder="ابحث عن منتج..." autocomplete="off">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+
+  <!-- عدد النتائج -->
+  <div class="results-info" id="resultsInfo"></div>
+
+  <!-- شبكة المنتجات -->
+  <main class="products-container">
+    <div class="products-grid" id="productsGrid">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>جارٍ تحميل المنتجات...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- التذييل -->
+  <footer class="footer" id="footer"></footer>
+
+  <!-- خلفية معتمة -->
+  <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+  <!-- لوحة السلة -->
+  <aside class="side-panel cart-panel" id="cartPanel">
+    <div class="panel-header">
+      <h2>🛒 سلة المشتريات</h2>
+      <button class="panel-close" onclick="closeCart()">✕</button>
+    </div>
+    <div class="panel-body" id="cartBody"></div>
+    <div class="panel-footer" id="cartFooter"></div>
+  </aside>
+
+  <!-- لوحة السجل -->
+  <aside class="side-panel history-panel" id="historyPanel">
+    <div class="panel-header">
+      <h2>📋 الطلبيات السابقة</h2>
+      <button class="panel-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div class="panel-body" id="historyBody"></div>
+    <div class="panel-footer" id="historyFooter"></div>
+  </aside>
+
+  <!-- Modal بيانات العميل -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>📋 بيانات الطلبية</h3>
+        <button class="modal-x" onclick="closeCheckout()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label><span class="req">★</span> الاسم</label>
+          <input type="text" id="buyerName" placeholder="اسم العميل">
+          <div class="err-msg" id="nameErr">⚠️ الاسم مطلوب</div>
+        </div>
+        <div class="form-group">
+          <label><span class="req">★</span> الهاتف</label>
+          <input type="tel" id="buyerPhone" placeholder="01XXXXXXXXX">
+          <div class="err-msg" id="phoneErr">⚠️ الهاتف مطلوب</div>
+        </div>
+        <div class="form-group">
+          <label>📝 ملاحظات (اختياري)</label>
+          <textarea id="buyerNotes" placeholder="أي تعليمات إضافية..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" onclick="sendToWhatsApp()">
+          📤 إرسال الطلبية
+        </button>
+        <button class="btn-secondary" onclick="closeCheckout()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal تأكيد -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <span class="confirm-icon" id="cfmIcon">⚠️</span>
+      <h4 id="cfmTitle">تأكيد</h4>
+      <p id="cfmMsg">هل أنت متأكد؟</p>
+      <div class="confirm-btns">
+        <button class="btn-confirm-yes" id="cfmYes">نعم</button>
+        <button class="btn-confirm-no" onclick="closeConfirm()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- JavaScript الرئيسي -->
+  <script src="app.js"></script>
+</body>
+</html>
