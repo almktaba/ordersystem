@@ -72,6 +72,72 @@ function getNow() {
 }
 
 /* ═══════════════════════════════════════════════
+   localStorage — دوال آمنة
+   ═══════════════════════════════════════════════ */
+
+function lsGet(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+
+function lsSet(key, val) {
+  try { localStorage.setItem(key, val); } catch (e) {}
+}
+
+function lsRemove(key) {
+  try { localStorage.removeItem(key); } catch (e) {}
+}
+
+function lsGetJson(key) {
+  try {
+    var raw = localStorage.getItem(key);
+    if (!raw) { return null; }
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function lsSetJson(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   Feature 1 — نظام تحديث المنتجات (Auto Update)
+   ═══════════════════════════════════════════════ */
+
+/**
+ * يقارن version الحالية في STORE_CONFIG
+ * مع النسخة المخزنة في localStorage.
+ * إذا اختلفت → ينظف السلة فقط (لأن أسماء/أسعار المنتجات
+ * قد تكون تغيرت) ويحتفظ بسجل الطلبيات.
+ * إذا لم توجد نسخة مخزنة → يحفظ الحالية فقط.
+ */
+function checkProductsVersion() {
+  var currentVer = (STORE_CONFIG && STORE_CONFIG.version)
+    ? String(STORE_CONFIG.version)
+    : null;
+
+  /* إذا لم تكن هناك version في STORE_CONFIG → تجاهل */
+  if (!currentVer) { return; }
+
+  var storedVer = lsGet("productsVersion");
+
+  /* أول زيارة → حفظ النسخة وانتهى */
+  if (!storedVer) {
+    lsSet("productsVersion", currentVer);
+    return;
+  }
+
+  /* نفس النسخة → لا شيء */
+  if (storedVer === currentVer) { return; }
+
+  /* نسخة مختلفة → تنظيف السلة فقط */
+  lsRemove("cart");
+  cart = [];
+  lsSet("productsVersion", currentVer);
+
+  showToast("تم تحديث قائمة المنتجات", "info");
+}
+
+/* ═══════════════════════════════════════════════
    تحميل البيانات
    ═══════════════════════════════════════════════ */
 
@@ -100,9 +166,15 @@ function loadProducts() {
   allProducts      = STORE_CONFIG.products;
   filteredProducts = allProducts.slice();
 
+  /* ← Feature 1: فحص الإصدار قبل تحميل البيانات */
+  checkProductsVersion();
+
   loadCart();
   loadHistory();
   initUI();
+
+  /* ← Feature 2: Onboarding بعد تهيئة الواجهة */
+  initOnboarding();
 }
 
 /* ═══════════════════════════════════════════════
@@ -115,9 +187,7 @@ function initUI() {
   document.getElementById("footerText").textContent =
     storeData.storeName + " - نظام الطلبيات - " + new Date().getFullYear();
 
-  /* توليد الفلاتر من products.js */
   generateFilterTags();
-
   renderProducts();
   updateCartBadge();
   updateHistoryBadge();
@@ -131,9 +201,7 @@ function generateFilterTags() {
   var wrap = document.getElementById("filtersTagsWrap");
   var btn  = document.getElementById("filterToggle");
 
-  /* التحقق من وجود فلاتر في STORE_CONFIG */
   if (!Array.isArray(storeData.filters) || storeData.filters.length === 0) {
-    /* إخفاء زر الفلاتر لو مفيش فلاتر */
     btn.style.display = "none";
     return;
   }
@@ -190,12 +258,10 @@ function applyFilters() {
 
   filteredProducts = allProducts.filter(function (p) {
 
-    /* شرط البحث النصي */
     if (q !== "" && p.name.toLowerCase().indexOf(q) === -1) {
       return false;
     }
 
-    /* شرط الفلاتر — يتحقق من حقل tag في المنتج */
     if (activeFilters.length > 0) {
       var matched = false;
       var i;
@@ -403,17 +469,16 @@ function updateQty(idx, delta) {
 }
 
 function saveCart() {
-  try { localStorage.setItem("cart", JSON.stringify(cart)); } catch (e) {}
+  lsSetJson("cart", cart);
 }
 
 function loadCart() {
-  try {
-    var saved = localStorage.getItem("cart");
-    if (saved) {
-      cart = JSON.parse(saved);
-      if (!Array.isArray(cart)) { cart = []; }
-    }
-  } catch (e) { cart = []; }
+  var saved = lsGetJson("cart");
+  if (saved && Array.isArray(saved)) {
+    cart = saved;
+  } else {
+    cart = [];
+  }
 }
 
 function updateCartBadge() {
@@ -434,7 +499,7 @@ function updateCartBadge() {
 
 function clearCart() {
   showConfirm({
-    icon:    "تنبيه",
+    icon:    "🗑️",
     title:   "تفريغ السلة",
     msg:     "هل تريد تفريغ السلة بالكامل؟",
     yesText: "نعم",
@@ -475,7 +540,7 @@ function renderCartBody() {
     var sub  = item.price * item.quantity;
     itemsHtml +=
       '<div class="cart-item">' +
-        '<button class="cart-item-del" onclick="removeFromCart(' + i + ')">X</button>' +
+        '<button class="cart-item-del" onclick="removeFromCart(' + i + ')">✕</button>' +
         '<div class="cart-item-name">'  + escHtml(item.name)  + "</div>" +
         '<div class="cart-item-price">السعر: ' +
           fmt(item.price) + " " + escHtml(storeData.currency) +
@@ -508,9 +573,9 @@ function renderCartBody() {
     "</div>" +
     '<div class="cart-actions">' +
       '<button class="btn-whatsapp" onclick="showCheckout()">' +
-        "ارسال الطلبية عبر واتساب" +
+        "📤 ارسال الطلبية عبر واتساب" +
       "</button>" +
-      '<button class="btn-danger-outline" onclick="clearCart()">تفريغ السلة</button>' +
+      '<button class="btn-danger-outline" onclick="clearCart()">🗑️ تفريغ السلة</button>' +
     "</div>";
 
   footer.style.display = "block";
@@ -913,17 +978,16 @@ function downloadImage(idx) {
    ═══════════════════════════════════════════════ */
 
 function saveHistory() {
-  try { localStorage.setItem("orderHistory", JSON.stringify(orderHistory)); } catch (e) {}
+  lsSetJson("orderHistory", orderHistory);
 }
 
 function loadHistory() {
-  try {
-    var saved = localStorage.getItem("orderHistory");
-    if (saved) {
-      orderHistory = JSON.parse(saved);
-      if (!Array.isArray(orderHistory)) { orderHistory = []; }
-    }
-  } catch (e) { orderHistory = []; }
+  var saved = lsGetJson("orderHistory");
+  if (saved && Array.isArray(saved)) {
+    orderHistory = saved;
+  } else {
+    orderHistory = [];
+  }
 }
 
 function updateHistoryBadge() {
@@ -938,7 +1002,7 @@ function updateHistoryBadge() {
 
 function deleteOrder(idx) {
   showConfirm({
-    icon:    "تنبيه",
+    icon:    "🗑️",
     title:   "حذف الطلبية",
     msg:     "هل تريد حذف هذه الطلبية نهائيا؟",
     yesText: "نعم احذفها",
@@ -954,7 +1018,7 @@ function deleteOrder(idx) {
 
 function clearAllHistory() {
   showConfirm({
-    icon:    "تنبيه",
+    icon:    "🗑️",
     title:   "مسح كل السجل",
     msg:     "سيتم حذف جميع الطلبيات السابقة نهائيا.",
     yesText: "نعم امسح الكل",
@@ -1013,7 +1077,7 @@ function renderHistory() {
     var notesHTML = "";
     if (order.notes) {
       notesHTML =
-        '<div class="order-notes">ملاحظات: ' + escHtml(order.notes) + "</div>";
+        '<div class="order-notes">📝 ملاحظات: ' + escHtml(order.notes) + "</div>";
     }
 
     var metaPhone = order.buyerPhone ? " - " + escHtml(order.buyerPhone) : "";
@@ -1044,11 +1108,11 @@ function renderHistory() {
           notesHTML +
           '<div class="order-card-actions">' +
             '<button class="btn-order-action btn-order-resend" ' +
-              'onclick="resendOrder(' + i + ')">اعادة ارسال</button>' +
+              'onclick="resendOrder(' + i + ')">📤 اعادة ارسال</button>' +
             '<button class="btn-order-action btn-order-img" ' +
-              'onclick="downloadImage(' + i + ')">تحميل صورة</button>' +
+              'onclick="downloadImage(' + i + ')">🖼️ تحميل صورة</button>' +
             '<button class="btn-order-action btn-order-del" ' +
-              'onclick="deleteOrder(' + i + ')">حذف</button>' +
+              'onclick="deleteOrder(' + i + ')">🗑️ حذف</button>' +
           "</div>" +
         "</div>" +
       "</div>";
@@ -1058,7 +1122,7 @@ function renderHistory() {
 
   footer.innerHTML =
     '<button class="btn-danger-outline" onclick="clearAllHistory()">' +
-    "مسح كل الطلبيات السابقة" +
+    "🗑️ مسح كل الطلبيات السابقة" +
     "</button>";
   footer.style.display = "block";
 }
@@ -1069,13 +1133,13 @@ function renderHistory() {
 
 function confirmClearAllData() {
   showConfirm({
-    icon:    "تنبيه",
+    icon:    "🗑️",
     title:   "مسح جميع البيانات",
     msg:     "سيتم حذف السلة وجميع الطلبيات المحفوظة نهائيا.",
     yesText: "نعم امسح كل شيء",
     onYes:   function () {
-      localStorage.removeItem("cart");
-      localStorage.removeItem("orderHistory");
+      lsRemove("cart");
+      lsRemove("orderHistory");
       cart         = [];
       orderHistory = [];
       updateCartBadge();
@@ -1092,7 +1156,7 @@ function confirmClearAllData() {
    ═══════════════════════════════════════════════ */
 
 function showConfirm(opts) {
-  document.getElementById("cfmIcon").textContent  = opts.icon    || "تنبيه";
+  document.getElementById("cfmIcon").textContent  = opts.icon    || "⚠️";
   document.getElementById("cfmTitle").textContent = opts.title   || "تاكيد";
   document.getElementById("cfmMsg").textContent   = opts.msg     || "";
   document.getElementById("cfmYes").textContent   = opts.yesText || "نعم";
@@ -1118,7 +1182,16 @@ document.addEventListener("keydown", function (e) {
   var key = e.key;
 
   if (key === "Escape") {
-    if (document.getElementById("checkoutModal").classList.contains("show")) {
+    if (document.getElementById("onboardingOverlay") &&
+        document.getElementById("onboardingOverlay").classList.contains("show")) {
+      skipOnboarding();
+    } else if (document.getElementById("guideModal") &&
+               document.getElementById("guideModal").classList.contains("show")) {
+      closeGuide();
+    } else if (document.getElementById("helpMenu") &&
+               document.getElementById("helpMenu").classList.contains("show")) {
+      closeHelpMenu();
+    } else if (document.getElementById("checkoutModal").classList.contains("show")) {
       closeCheckout();
     } else if (document.getElementById("confirmOverlay").classList.contains("show")) {
       closeConfirm();
@@ -1146,6 +1219,178 @@ document.getElementById("buyerName").addEventListener("input", function () {
 document.getElementById("buyerPhone").addEventListener("input", function () {
   this.classList.remove("input-err");
   document.getElementById("phoneErr").classList.remove("show");
+});
+
+/* ═══════════════════════════════════════════════
+   Feature 2 — Onboarding (First-Time Experience)
+   ═══════════════════════════════════════════════ */
+
+/** بيانات خطوات الـ Onboarding */
+var ONBOARDING_STEPS = [
+  {
+    icon:  "🏷️",
+    title: "اختار الصف الدراسي",
+    desc:  "اضغط على زر «فلاتر» واختار صف ابنك أو بنتك عشان تشوف كتبه بس"
+  },
+  {
+    icon:  "🛒",
+    title: "اضف المنتجات للسلة",
+    desc:  "لما تلاقي الكتاب اللي عايزه، اضغط «اضف للسلة» وهيتحفظ ليك"
+  },
+  {
+    icon:  "📤",
+    title: "ابعت طلبك على واتساب",
+    desc:  "افتح السلة من الزر الجانبي، ثم اضغط «ارسال الطلبية» وهيفتح واتساب تلقائيًا"
+  }
+];
+
+var onboardingCurrentStep = 0;
+
+/**
+ * يتحقق من localStorage — إذا لم يُكمل المستخدم Onboarding من قبل
+ * يعرضه تلقائيًا بعد 800ms من تحميل الصفحة
+ */
+function initOnboarding() {
+  var done = lsGet("onboardingDone");
+  if (done === "1") { return; }
+
+  setTimeout(function () {
+    showOnboarding(0);
+  }, 800);
+}
+
+/** يعرض الـ Onboarding من خطوة معينة */
+function showOnboarding(stepIndex) {
+  onboardingCurrentStep = stepIndex || 0;
+  renderOnboardingStep();
+
+  var overlay = document.getElementById("onboardingOverlay");
+  overlay.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+/** يرسم محتوى الخطوة الحالية */
+function renderOnboardingStep() {
+  var step     = ONBOARDING_STEPS[onboardingCurrentStep];
+  var total    = ONBOARDING_STEPS.length;
+  var isLast   = onboardingCurrentStep === total - 1;
+
+  /* المحتوى */
+  document.getElementById("obIcon").textContent  = step.icon;
+  document.getElementById("obTitle").textContent = step.title;
+  document.getElementById("obDesc").textContent  = step.desc;
+
+  /* الـ Dots */
+  var dotsHtml = "";
+  var i;
+  for (i = 0; i < total; i++) {
+    dotsHtml +=
+      '<span class="ob-dot' + (i === onboardingCurrentStep ? " active" : "") + '"></span>';
+  }
+  document.getElementById("obDots").innerHTML = dotsHtml;
+
+  /* الأزرار */
+  var nextBtn = document.getElementById("obNextBtn");
+  nextBtn.textContent = isLast ? "🚀 ابدأ الآن" : "التالي ←";
+
+  var skipBtn = document.getElementById("obSkipBtn");
+  skipBtn.style.visibility = isLast ? "hidden" : "visible";
+}
+
+/** الانتقال للخطوة التالية أو الإغلاق في آخر خطوة */
+function nextOnboardingStep() {
+  var total = ONBOARDING_STEPS.length;
+  if (onboardingCurrentStep < total - 1) {
+    onboardingCurrentStep += 1;
+    renderOnboardingStep();
+  } else {
+    skipOnboarding();
+  }
+}
+
+/** تخطي أو إنهاء الـ Onboarding */
+function skipOnboarding() {
+  lsSet("onboardingDone", "1");
+  var overlay = document.getElementById("onboardingOverlay");
+  overlay.classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+/** إعادة تشغيل Onboarding (من زر المساعدة) */
+function replayOnboarding() {
+  closeHelpMenu();
+  lsRemove("onboardingDone");
+  setTimeout(function () { showOnboarding(0); }, 200);
+}
+
+/* ═══════════════════════════════════════════════
+   Feature 3 — دليل المستخدم (User Guide)
+   ═══════════════════════════════════════════════ */
+
+var GUIDE_STEPS = [
+  { icon: "🏷️", text: "اختار الصف من زر «فلاتر» في البحث" },
+  { icon: "📦", text: "اختار المنتج اللي عايزه من القائمة" },
+  { icon: "🛒", text: "اضغط «اضف للسلة» وحدد الكمية قبلها لو عايز أكتر من نسخة" },
+  { icon: "👀", text: "افتح السلة من الزر الجانبي الأصفر على الشاشة" },
+  { icon: "📤", text: "اضغط «ارسال الطلبية عبر واتساب»" },
+  { icon: "✍️", text: "اكتب اسمك ورقم هاتفك في الفورم اللي هيظهر" },
+  { icon: "💬", text: "واتساب هيفتح تلقائيًا مع تفاصيل طلبك جاهزة!" }
+];
+
+/** يفتح نافذة دليل المستخدم */
+function showGuide() {
+  closeHelpMenu();
+
+  var stepsHtml = "";
+  var i;
+  for (i = 0; i < GUIDE_STEPS.length; i++) {
+    stepsHtml +=
+      '<div class="guide-step">' +
+        '<div class="guide-step-num">' + (i + 1) + "</div>" +
+        '<div class="guide-step-icon">' + GUIDE_STEPS[i].icon + "</div>" +
+        '<div class="guide-step-text">'  + escHtml(GUIDE_STEPS[i].text) + "</div>" +
+      "</div>";
+  }
+
+  document.getElementById("guideSteps").innerHTML = stepsHtml;
+  document.getElementById("guideModal").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+/** يغلق نافذة دليل المستخدم */
+function closeGuide() {
+  document.getElementById("guideModal").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+/* ═══════════════════════════════════════════════
+   زر المساعدة (Help FAB)
+   ═══════════════════════════════════════════════ */
+
+/** يفتح/يغلق قائمة المساعدة */
+function toggleHelpMenu() {
+  var menu = document.getElementById("helpMenu");
+  if (menu.classList.contains("show")) {
+    closeHelpMenu();
+  } else {
+    menu.classList.add("show");
+  }
+}
+
+/** يغلق قائمة المساعدة */
+function closeHelpMenu() {
+  var menu = document.getElementById("helpMenu");
+  if (menu) { menu.classList.remove("show"); }
+}
+
+/* إغلاق قائمة المساعدة عند الضغط خارجها */
+document.addEventListener("click", function (e) {
+  var menu    = document.getElementById("helpMenu");
+  var fabHelp = document.getElementById("fabHelp");
+  if (!menu || !fabHelp) { return; }
+  if (!menu.contains(e.target) && !fabHelp.contains(e.target)) {
+    closeHelpMenu();
+  }
 });
 
 /* ═══════════════════════════════════════════════

@@ -14,16 +14,26 @@
   <!-- شريط التنبيه -->
   <div class="alert-bar" id="alertBar"></div>
 
-  <!-- الشريط العلوي -->
+  <!-- ═══════════════════════════════════════════
+       الشريط العلوي
+       ═══════════════════════════════════════════ -->
   <header class="header">
     <div class="header-content">
+
+      <!-- اسم المتجر -->
       <div class="store-title" id="storeName">جارٍ التحميل...</div>
+
+      <!-- أدوات الهيدر -->
       <div class="header-tools">
-        <a class="btn-wa-group"
-           href="https://chat.whatsapp.com/HDxgTtrJfb2FGRulY26YiB"
-           target="_blank" title="انضم لمجموعة الواتساب">
-          💬 <span>انضم للمجموعة</span>
-        </a>
+
+        <!-- ✅ زر السلة في الهيدر -->
+        <button class="header-cart-btn" onclick="toggleCart()" title="سلة المشتريات">
+          <span class="header-cart-icon">🛒</span>
+          <span class="header-cart-label">السلة</span>
+          <span class="header-cart-total" id="cartTotalHeader">0.00</span>
+          <span class="header-cart-badge hidden" id="cartBadge">0</span>
+        </button>
+
       </div>
     </div>
   </header>
@@ -36,8 +46,11 @@
       <div class="search-bar-row">
         <div class="search-wrapper">
           <span class="search-icon">🔍</span>
-          <input type="text" class="search-input" id="searchInput"
-                 placeholder="ابحث عن منتج..." autocomplete="off">
+          <input type="text"
+                 class="search-input"
+                 id="searchInput"
+                 placeholder="ابحث عن منتج..."
+                 autocomplete="off">
           <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
         </div>
         <button class="btn-filter-toggle" id="filterToggle" onclick="toggleFilters()">
@@ -80,10 +93,12 @@
     <div class="footer-text" id="footerText"></div>
   </footer>
 
-  <!-- خلفية معتمة -->
+  <!-- خلفية معتمة للوحات الجانبية -->
   <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
 
-  <!-- لوحة السلة -->
+  <!-- ═══════════════════════════════════════════
+       لوحة السلة
+       ═══════════════════════════════════════════ -->
   <aside class="side-panel cart-panel" id="cartPanel">
     <div class="panel-header">
       <h2>🛒 سلة المشتريات</h2>
@@ -93,7 +108,9 @@
     <div class="panel-footer" id="cartFooter"></div>
   </aside>
 
-  <!-- لوحة السجل -->
+  <!-- ═══════════════════════════════════════════
+       لوحة السجل
+       ═══════════════════════════════════════════ -->
   <aside class="side-panel history-panel" id="historyPanel">
     <div class="panel-header">
       <h2>📋 الطلبيات السابقة</h2>
@@ -103,7 +120,9 @@
     <div class="panel-footer" id="historyFooter"></div>
   </aside>
 
-  <!-- Modal بيانات العميل -->
+  <!-- ═══════════════════════════════════════════
+       Modal بيانات العميل
+       ═══════════════════════════════════════════ -->
   <div class="modal-overlay" id="checkoutModal">
     <div class="modal">
       <div class="modal-head">
@@ -135,7 +154,9 @@
     </div>
   </div>
 
-  <!-- Modal تأكيد -->
+  <!-- ═══════════════════════════════════════════
+       Modal تأكيد
+       ═══════════════════════════════════════════ -->
   <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-box">
       <span class="confirm-icon" id="cfmIcon">⚠️</span>
@@ -148,23 +169,94 @@
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- ═══════════════════════════════════════════
+       Feature 2 — Onboarding Overlay
+       ═══════════════════════════════════════════ -->
+  <div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-card">
+      <span class="ob-icon" id="obIcon">🏷️</span>
+      <div class="ob-title" id="obTitle"></div>
+      <div class="ob-desc"  id="obDesc"></div>
+      <div class="ob-dots"  id="obDots"></div>
+      <div class="ob-actions">
+        <button class="ob-btn-next" id="obNextBtn" onclick="nextOnboardingStep()">
+          التالي ←
+        </button>
+        <button class="ob-btn-skip" id="obSkipBtn" onclick="skipOnboarding()">
+          تخطي
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       Feature 3 — دليل المستخدم
+       ═══════════════════════════════════════════ -->
+  <div class="guide-overlay" id="guideModal">
+    <div class="guide-modal">
+      <div class="guide-head">
+        <h3>📖 طريقة الطلب</h3>
+        <button class="guide-close" onclick="closeGuide()">✕</button>
+      </div>
+      <div class="guide-body" id="guideSteps"></div>
+      <div class="guide-footer">
+        <button class="ob-btn-next" onclick="closeGuide()">
+          ✅ فهمت، هبدأ!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       Toast
+       ═══════════════════════════════════════════ -->
   <div class="toast-wrap" id="toastWrap"></div>
 
-  <!-- الأزرار العائمة -->
-  <button class="fab-danger" onclick="confirmClearAllData()" title="مسح البيانات">🗑️</button>
+  <!-- ═══════════════════════════════════════════
+       الأزرار العائمة (FABs)
+       ═══════════════════════════════════════════ -->
 
-  <button class="fab-cart" onclick="toggleCart()" title="سلة المشتريات">
-    🛒
-    <span class="badge hidden" id="cartBadge">0</span>
-    <span class="fab-cart-total" id="cartTotalHeader">0.00</span>
+  <!-- ✅ زر واتساب للمجموعة (بدلاً من زر المسح) أسفل يسار -->
+  <a class="fab-whatsapp-group"
+     href="https://chat.whatsapp.com/HDxgTtrJfb2FGRulY26YiB"
+     target="_blank"
+     rel="noopener noreferrer"
+     title="انضم لمجموعة الواتساب">
+    💬
+  </a>
+
+  <!-- زر المساعدة -->
+  <button class="fab-help"
+          id="fabHelp"
+          onclick="toggleHelpMenu()"
+          title="مساعدة">
+    ❓
   </button>
 
-  <button class="fab-history" onclick="toggleHistory()" title="الطلبيات السابقة">
+  <!-- قائمة المساعدة المنبثقة -->
+  <div class="help-menu" id="helpMenu">
+    <button class="help-menu-item" onclick="showGuide()">
+      <span class="hmi-icon">📖</span>
+      <span>طريقة الطلب</span>
+    </button>
+    <button class="help-menu-item" onclick="replayOnboarding()">
+      <span class="hmi-icon">🎓</span>
+      <span>إعادة الجولة التعريفية</span>
+    </button>
+  </div>
+
+  <!-- زر سجل الطلبيات -->
+  <button class="fab-history"
+          onclick="toggleHistory()"
+          title="الطلبيات السابقة">
     📋
     <span class="badge hidden" id="historyBadge">0</span>
   </button>
 
+  <!-- ═══════════════════════════════════════════
+       السكريبت الرئيسي
+       ═══════════════════════════════════════════ -->
   <script src="app.js"></script>
+
 </body>
 </html>

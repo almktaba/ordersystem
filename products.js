@@ -2,6 +2,7 @@
 
 var STORE_CONFIG = {
   storeName : "المكتبة",
+    version   : "20260416094933",          /* ← أضف هذا السطر */
   currency  : "ج.م",
   whatsapp  : "201274806845",
   filters   : [
