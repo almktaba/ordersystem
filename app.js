@@ -103,33 +103,22 @@ function lsSetJson(key, val) {
    Feature 1 — نظام تحديث المنتجات (Auto Update)
    ═══════════════════════════════════════════════ */
 
-/**
- * يقارن version الحالية في STORE_CONFIG
- * مع النسخة المخزنة في localStorage.
- * إذا اختلفت → ينظف السلة فقط (لأن أسماء/أسعار المنتجات
- * قد تكون تغيرت) ويحتفظ بسجل الطلبيات.
- * إذا لم توجد نسخة مخزنة → يحفظ الحالية فقط.
- */
 function checkProductsVersion() {
   var currentVer = (STORE_CONFIG && STORE_CONFIG.version)
     ? String(STORE_CONFIG.version)
     : null;
 
-  /* إذا لم تكن هناك version في STORE_CONFIG → تجاهل */
   if (!currentVer) { return; }
 
   var storedVer = lsGet("productsVersion");
 
-  /* أول زيارة → حفظ النسخة وانتهى */
   if (!storedVer) {
     lsSet("productsVersion", currentVer);
     return;
   }
 
-  /* نفس النسخة → لا شيء */
   if (storedVer === currentVer) { return; }
 
-  /* نسخة مختلفة → تنظيف السلة فقط */
   lsRemove("cart");
   cart = [];
   lsSet("productsVersion", currentVer);
@@ -166,14 +155,12 @@ function loadProducts() {
   allProducts      = STORE_CONFIG.products;
   filteredProducts = allProducts.slice();
 
-  /* ← Feature 1: فحص الإصدار قبل تحميل البيانات */
   checkProductsVersion();
 
   loadCart();
   loadHistory();
   initUI();
 
-  /* ← Feature 2: Onboarding بعد تهيئة الواجهة */
   initOnboarding();
 }
 
@@ -253,24 +240,56 @@ function toggleFilter(btn, tag) {
   applyFilters();
 }
 
+/* ═══════════════════════════════════════════════
+   دالة مساعدة — Multi-Tag Support
+   ═══════════════════════════════════════════════
+
+   تدعم 4 أنواع من المنتجات:
+   1. بدون tag           → تُرجع []
+   2. tag string         → تُرجع [tag]
+   3. tags array         → تُرجع tags
+   4. tags array + tag   → تُرجع tags (tags لها الأولوية)
+*/
+function getProductTags(p) {
+  if (Array.isArray(p.tags) && p.tags.length > 0) {
+    return p.tags;
+  }
+  if (p.tag && typeof p.tag === "string" && p.tag.trim() !== "") {
+    return [p.tag];
+  }
+  return [];
+}
+
+/* ═══════════════════════════════════════════════
+   تطبيق الفلاتر
+   ═══════════════════════════════════════════════ */
+
 function applyFilters() {
   var q = document.getElementById("searchInput").value.trim().toLowerCase();
 
   filteredProducts = allProducts.filter(function (p) {
 
+    /* فلتر البحث النصي */
     if (q !== "" && p.name.toLowerCase().indexOf(q) === -1) {
       return false;
     }
 
+    /* فلتر التاجات — يدعم tag و tags */
     if (activeFilters.length > 0) {
-      var matched = false;
-      var i;
+      var productTags = getProductTags(p);
+      var matched     = false;
+      var i, j;
+
       for (i = 0; i < activeFilters.length; i++) {
-        if (p.tag && p.tag === activeFilters[i]) {
-          matched = true;
-          break;
+        for (j = 0; j < productTags.length; j++) {
+          if (productTags[j] === activeFilters[i]) {
+            matched = true;
+            break;
+          }
         }
+        if (matched) { break; }
       }
+
       if (!matched) { return false; }
     }
 
@@ -1225,7 +1244,6 @@ document.getElementById("buyerPhone").addEventListener("input", function () {
    Feature 2 — Onboarding (First-Time Experience)
    ═══════════════════════════════════════════════ */
 
-/** بيانات خطوات الـ Onboarding */
 var ONBOARDING_STEPS = [
   {
     icon:  "🏷️",
@@ -1246,10 +1264,6 @@ var ONBOARDING_STEPS = [
 
 var onboardingCurrentStep = 0;
 
-/**
- * يتحقق من localStorage — إذا لم يُكمل المستخدم Onboarding من قبل
- * يعرضه تلقائيًا بعد 800ms من تحميل الصفحة
- */
 function initOnboarding() {
   var done = lsGet("onboardingDone");
   if (done === "1") { return; }
@@ -1259,7 +1273,6 @@ function initOnboarding() {
   }, 800);
 }
 
-/** يعرض الـ Onboarding من خطوة معينة */
 function showOnboarding(stepIndex) {
   onboardingCurrentStep = stepIndex || 0;
   renderOnboardingStep();
@@ -1269,18 +1282,15 @@ function showOnboarding(stepIndex) {
   document.body.style.overflow = "hidden";
 }
 
-/** يرسم محتوى الخطوة الحالية */
 function renderOnboardingStep() {
   var step     = ONBOARDING_STEPS[onboardingCurrentStep];
   var total    = ONBOARDING_STEPS.length;
   var isLast   = onboardingCurrentStep === total - 1;
 
-  /* المحتوى */
   document.getElementById("obIcon").textContent  = step.icon;
   document.getElementById("obTitle").textContent = step.title;
   document.getElementById("obDesc").textContent  = step.desc;
 
-  /* الـ Dots */
   var dotsHtml = "";
   var i;
   for (i = 0; i < total; i++) {
@@ -1289,7 +1299,6 @@ function renderOnboardingStep() {
   }
   document.getElementById("obDots").innerHTML = dotsHtml;
 
-  /* الأزرار */
   var nextBtn = document.getElementById("obNextBtn");
   nextBtn.textContent = isLast ? "🚀 ابدأ الآن" : "التالي ←";
 
@@ -1297,7 +1306,6 @@ function renderOnboardingStep() {
   skipBtn.style.visibility = isLast ? "hidden" : "visible";
 }
 
-/** الانتقال للخطوة التالية أو الإغلاق في آخر خطوة */
 function nextOnboardingStep() {
   var total = ONBOARDING_STEPS.length;
   if (onboardingCurrentStep < total - 1) {
@@ -1308,7 +1316,6 @@ function nextOnboardingStep() {
   }
 }
 
-/** تخطي أو إنهاء الـ Onboarding */
 function skipOnboarding() {
   lsSet("onboardingDone", "1");
   var overlay = document.getElementById("onboardingOverlay");
@@ -1316,7 +1323,6 @@ function skipOnboarding() {
   document.body.style.overflow = "";
 }
 
-/** إعادة تشغيل Onboarding (من زر المساعدة) */
 function replayOnboarding() {
   closeHelpMenu();
   lsRemove("onboardingDone");
@@ -1326,8 +1332,6 @@ function replayOnboarding() {
 /* ═══════════════════════════════════════════════
    Feature 3 — دليل المستخدم (User Guide)
    ═══════════════════════════════════════════════ */
-
-// ابحث عن هذا المتغير في app.js واستبدله بالكامل
 
 var GUIDE_STEPS = [
   {
@@ -1360,7 +1364,6 @@ var GUIDE_STEPS = [
   }
 ];
 
-/** يفتح نافذة دليل المستخدم */
 function showGuide() {
   closeHelpMenu();
 
@@ -1380,7 +1383,6 @@ function showGuide() {
   document.body.style.overflow = "hidden";
 }
 
-/** يغلق نافذة دليل المستخدم */
 function closeGuide() {
   document.getElementById("guideModal").classList.remove("show");
   document.body.style.overflow = "";
@@ -1390,7 +1392,6 @@ function closeGuide() {
    زر المساعدة (Help FAB)
    ═══════════════════════════════════════════════ */
 
-/** يفتح/يغلق قائمة المساعدة */
 function toggleHelpMenu() {
   var menu = document.getElementById("helpMenu");
   if (menu.classList.contains("show")) {
@@ -1400,13 +1401,11 @@ function toggleHelpMenu() {
   }
 }
 
-/** يغلق قائمة المساعدة */
 function closeHelpMenu() {
   var menu = document.getElementById("helpMenu");
   if (menu) { menu.classList.remove("show"); }
 }
 
-/* إغلاق قائمة المساعدة عند الضغط خارجها */
 document.addEventListener("click", function (e) {
   var menu    = document.getElementById("helpMenu");
   var fabHelp = document.getElementById("fabHelp");
