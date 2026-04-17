@@ -242,14 +242,7 @@ function toggleFilter(btn, tag) {
 
 /* ═══════════════════════════════════════════════
    دالة مساعدة — Multi-Tag Support
-   ═══════════════════════════════════════════════
-
-   تدعم 4 أنواع من المنتجات:
-   1. بدون tag           → تُرجع []
-   2. tag string         → تُرجع [tag]
-   3. tags array         → تُرجع tags
-   4. tags array + tag   → تُرجع tags (tags لها الأولوية)
-*/
+   ═══════════════════════════════════════════════ */
 function getProductTags(p) {
   if (Array.isArray(p.tags) && p.tags.length > 0) {
     return p.tags;
@@ -269,12 +262,10 @@ function applyFilters() {
 
   filteredProducts = allProducts.filter(function (p) {
 
-    /* فلتر البحث النصي */
     if (q !== "" && p.name.toLowerCase().indexOf(q) === -1) {
       return false;
     }
 
-    /* فلتر التاجات — يدعم tag و tags */
     if (activeFilters.length > 0) {
       var productTags = getProductTags(p);
       var matched     = false;
@@ -394,16 +385,6 @@ function renderProducts() {
 var doSearch = debounce(function () {
   applyFilters();
 }, 300);
-
-document.getElementById("searchInput").addEventListener("input", function () {
-  var clearBtn = document.getElementById("searchClear");
-  if (this.value.length > 0) {
-    clearBtn.classList.add("show");
-  } else {
-    clearBtn.classList.remove("show");
-  }
-  doSearch();
-});
 
 function clearSearch() {
   document.getElementById("searchInput").value = "";
@@ -683,12 +664,6 @@ function closeCheckout() {
   document.getElementById("checkoutModal").classList.remove("show");
   document.body.style.overflow = "";
 }
-
-document.getElementById("checkoutModal").addEventListener("click", function (e) {
-  if (e.target === document.getElementById("checkoutModal")) {
-    closeCheckout();
-  }
-});
 
 /* ═══════════════════════════════════════════════
    بناء الرسالة
@@ -1188,58 +1163,6 @@ function closeConfirm() {
   confirmCallback = null;
 }
 
-document.getElementById("cfmYes").addEventListener("click", function () {
-  if (typeof confirmCallback === "function") { confirmCallback(); }
-  closeConfirm();
-});
-
-/* ═══════════════════════════════════════════════
-   احداث لوحة المفاتيح
-   ═══════════════════════════════════════════════ */
-
-document.addEventListener("keydown", function (e) {
-  var key = e.key;
-
-  if (key === "Escape") {
-    if (document.getElementById("onboardingOverlay") &&
-        document.getElementById("onboardingOverlay").classList.contains("show")) {
-      skipOnboarding();
-    } else if (document.getElementById("guideModal") &&
-               document.getElementById("guideModal").classList.contains("show")) {
-      closeGuide();
-    } else if (document.getElementById("helpMenu") &&
-               document.getElementById("helpMenu").classList.contains("show")) {
-      closeHelpMenu();
-    } else if (document.getElementById("checkoutModal").classList.contains("show")) {
-      closeCheckout();
-    } else if (document.getElementById("confirmOverlay").classList.contains("show")) {
-      closeConfirm();
-    } else if (document.getElementById("cartPanel").classList.contains("open")) {
-      closeCart();
-    } else if (document.getElementById("historyPanel").classList.contains("open")) {
-      closeHistory();
-    }
-  }
-
-  if (key === "Enter") {
-    var modal = document.getElementById("checkoutModal");
-    if (modal.classList.contains("show") && e.target.tagName !== "TEXTAREA") {
-      e.preventDefault();
-      sendToWhatsApp();
-    }
-  }
-});
-
-document.getElementById("buyerName").addEventListener("input", function () {
-  this.classList.remove("input-err");
-  document.getElementById("nameErr").classList.remove("show");
-});
-
-document.getElementById("buyerPhone").addEventListener("input", function () {
-  this.classList.remove("input-err");
-  document.getElementById("phoneErr").classList.remove("show");
-});
-
 /* ═══════════════════════════════════════════════
    Feature 2 — Onboarding (First-Time Experience)
    ═══════════════════════════════════════════════ */
@@ -1406,17 +1329,92 @@ function closeHelpMenu() {
   if (menu) { menu.classList.remove("show"); }
 }
 
-document.addEventListener("click", function (e) {
-  var menu    = document.getElementById("helpMenu");
-  var fabHelp = document.getElementById("fabHelp");
-  if (!menu || !fabHelp) { return; }
-  if (!menu.contains(e.target) && !fabHelp.contains(e.target)) {
-    closeHelpMenu();
-  }
-});
-
 /* ═══════════════════════════════════════════════
-   تشغيل التطبيق
+   تشغيل التطبيق وربط الأحداث
    ═══════════════════════════════════════════════ */
 
-document.addEventListener("DOMContentLoaded", loadProducts);
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* تحميل المنتجات */
+  loadProducts();
+
+  /* البحث */
+  document.getElementById("searchInput").addEventListener("input", function () {
+    var clearBtn = document.getElementById("searchClear");
+    if (this.value.length > 0) {
+      clearBtn.classList.add("show");
+    } else {
+      clearBtn.classList.remove("show");
+    }
+    doSearch();
+  });
+
+  /* إغلاق Modal الشراء عند الضغط خارجها */
+  document.getElementById("checkoutModal").addEventListener("click", function (e) {
+    if (e.target === document.getElementById("checkoutModal")) {
+      closeCheckout();
+    }
+  });
+
+  /* زر تأكيد */
+  document.getElementById("cfmYes").addEventListener("click", function () {
+    if (typeof confirmCallback === "function") { confirmCallback(); }
+    closeConfirm();
+  });
+
+  /* لوحة المفاتيح */
+  document.addEventListener("keydown", function (e) {
+    var key = e.key;
+
+    if (key === "Escape") {
+      if (document.getElementById("onboardingOverlay") &&
+          document.getElementById("onboardingOverlay").classList.contains("show")) {
+        skipOnboarding();
+      } else if (document.getElementById("guideModal") &&
+                 document.getElementById("guideModal").classList.contains("show")) {
+        closeGuide();
+      } else if (document.getElementById("helpMenu") &&
+                 document.getElementById("helpMenu").classList.contains("show")) {
+        closeHelpMenu();
+      } else if (document.getElementById("checkoutModal").classList.contains("show")) {
+        closeCheckout();
+      } else if (document.getElementById("confirmOverlay").classList.contains("show")) {
+        closeConfirm();
+      } else if (document.getElementById("cartPanel").classList.contains("open")) {
+        closeCart();
+      } else if (document.getElementById("historyPanel").classList.contains("open")) {
+        closeHistory();
+      }
+    }
+
+    if (key === "Enter") {
+      var modal = document.getElementById("checkoutModal");
+      if (modal.classList.contains("show") && e.target.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        sendToWhatsApp();
+      }
+    }
+  });
+
+  /* إزالة أخطاء الحقول عند الكتابة */
+  document.getElementById("buyerName").addEventListener("input", function () {
+    this.classList.remove("input-err");
+    document.getElementById("nameErr").classList.remove("show");
+  });
+
+  document.getElementById("buyerPhone").addEventListener("input", function () {
+    this.classList.remove("input-err");
+    document.getElementById("phoneErr").classList.remove("show");
+  });
+
+  /* إغلاق قائمة المساعدة عند الضغط خارجها */
+  document.addEventListener("click", function (e) {
+    var menu    = document.getElementById("helpMenu");
+    var fabHelp = document.getElementById("fabHelp");
+    if (!menu || !fabHelp) { return; }
+    if (!menu.contains(e.target) && !fabHelp.contains(e.target)) {
+      closeHelpMenu();
+    }
+  });
+
+});
