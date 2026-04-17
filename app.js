@@ -262,26 +262,26 @@ function applyFilters() {
 
   filteredProducts = allProducts.filter(function (p) {
 
+    /* فلتر البحث النصي */
     if (q !== "" && p.name.toLowerCase().indexOf(q) === -1) {
       return false;
     }
 
+    /* فلتر التاجات — AND: كل الفلاتر المختارة لازم تكون موجودة */
     if (activeFilters.length > 0) {
       var productTags = getProductTags(p);
-      var matched     = false;
       var i, j;
 
       for (i = 0; i < activeFilters.length; i++) {
+        var found = false;
         for (j = 0; j < productTags.length; j++) {
           if (productTags[j] === activeFilters[i]) {
-            matched = true;
+            found = true;
             break;
           }
         }
-        if (matched) { break; }
+        if (!found) { return false; }
       }
-
-      if (!matched) { return false; }
     }
 
     return true;
