@@ -6,7 +6,32 @@
   <title>نظام الطلبيات</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="products.js"></script>
+
+  <!-- ═══════════════════════════════════════════
+       Cache Busting — يمنع المتصفح من تخزين
+       products.js و app.js في الكاش
+       ═══════════════════════════════════════════ -->
+  <script>
+    (function(){
+      var ts = Date.now();
+      var s  = document.createElement("script");
+      s.src  = "products.js?v=" + ts;
+      s.onload = function() {
+        var a  = document.createElement("script");
+        a.src  = "app.js?v=" + ts;
+        document.head.appendChild(a);
+      };
+      s.onerror = function() {
+        var bar = document.getElementById("alertBar");
+        if (bar) {
+          bar.textContent = "تعذر تحميل ملف products.js - تأكد من وجوده في نفس المجلد";
+          bar.classList.add("show");
+        }
+      };
+      document.head.appendChild(s);
+    })();
+  </script>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -216,7 +241,7 @@
        الأزرار العائمة (FABs)
        ═══════════════════════════════════════════ -->
 
-  <!-- ✅ زر واتساب للمجموعة (بدلاً من زر المسح) أسفل يسار -->
+  <!-- ✅ زر واتساب للمجموعة -->
   <a class="fab-whatsapp-group"
      href="https://chat.whatsapp.com/HDxgTtrJfb2FGRulY26YiB"
      target="_blank"
@@ -252,11 +277,6 @@
     📋
     <span class="badge hidden" id="historyBadge">0</span>
   </button>
-
-  <!-- ═══════════════════════════════════════════
-       السكريبت الرئيسي
-       ═══════════════════════════════════════════ -->
-  <script src="app.js"></script>
 
 </body>
 </html>
