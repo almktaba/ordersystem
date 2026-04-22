@@ -11,7 +11,25 @@ var filteredProducts = [];
 var cart             = [];
 var orderHistory     = [];
 var confirmCallback  = null;
-var activeFilters    = [];
+var selectedGrades   = [];
+
+/* ═══════════════════════════════════════════════
+   قائمة الصفوف الدراسية (من الأدنى للأعلى)
+   ═══════════════════════════════════════════════ */
+var GRADES_ORDER = [
+  "الأول الابتدائي",
+  "الثاني الابتدائي",
+  "الثالث الابتدائي",
+  "الرابع الابتدائي",
+  "الخامس الابتدائي",
+  "السادس الابتدائي",
+  "الأول الاعدادي",
+  "الثاني الاعدادي",
+  "الثالث الاعدادي",
+  "الأول الثانوي",
+  "الثاني الثانوي",
+  "الثالث الثانوي"
+];
 
 /* ═══════════════════════════════════════════════
    دوال مساعدة
@@ -131,7 +149,9 @@ function checkProductsVersion() {
    ═══════════════════════════════════════════════ */
 
 function loadProducts() {
-  document.getElementById("productsGrid").innerHTML =
+  var grid = document.getElementById("productsGrid");
+
+  grid.innerHTML =
     '<div class="loading"><div class="spinner"></div><p>جاري التحميل...</p></div>';
 
   if (typeof STORE_CONFIG === "undefined"        ||
@@ -143,7 +163,7 @@ function loadProducts() {
       "تعذر تحميل ملف products.js - تاكد من وجوده في نفس المجلد";
     document.getElementById("alertBar").classList.add("show");
 
-    document.getElementById("productsGrid").innerHTML =
+    grid.innerHTML =
       '<div class="no-results">' +
       '<span class="big-emoji">⚠️</span>' +
       "<p>لا يمكن تشغيل النظام بدون ملف المنتجات</p>" +
@@ -159,8 +179,9 @@ function loadProducts() {
 
   loadCart();
   loadHistory();
-  initUI();
+  loadSelectedGrades();
 
+  initUI();
   initOnboarding();
 }
 
@@ -174,113 +195,90 @@ function initUI() {
   document.getElementById("footerText").textContent =
     storeData.storeName + " - نظام الطلبيات - " + new Date().getFullYear();
 
-  generateFilterTags();
-  renderProducts();
   updateCartBadge();
   updateHistoryBadge();
+  updateCustomerAreaBadge();
+
+  applyGradeFilter();
 }
 
 /* ═══════════════════════════════════════════════
-   نظام الفلاتر
-   ═══════════════════════════════════════════════ */
-
-function generateFilterTags() {
-  var wrap = document.getElementById("filtersTagsWrap");
-  var btn  = document.getElementById("filterToggle");
-
-  if (!Array.isArray(storeData.filters) || storeData.filters.length === 0) {
-    btn.style.display = "none";
-    return;
-  }
-
-  var filters = storeData.filters;
-  var html    = "";
-  var i;
-
-  for (i = 0; i < filters.length; i++) {
-    html +=
-      '<button class="filter-tag" ' +
-      'onclick="toggleFilter(this, \'' + escHtml(filters[i]) + '\')">' +
-      escHtml(filters[i]) +
-      '</button>';
-  }
-
-  wrap.innerHTML = html;
-}
-
-function toggleFilters() {
-  var area   = document.getElementById("filtersArea");
-  var arrow  = document.getElementById("filterArrow");
-  var toggle = document.getElementById("filterToggle");
-
-  if (area.classList.contains("hidden")) {
-    area.classList.remove("hidden");
-    arrow.classList.add("open");
-    toggle.classList.add("active");
-  } else {
-    area.classList.add("hidden");
-    arrow.classList.remove("open");
-    toggle.classList.remove("active");
-  }
-}
-
-function toggleFilter(btn, tag) {
-  var idx = activeFilters.indexOf(tag);
-
-  if (idx === -1) {
-    activeFilters.push(tag);
-    btn.classList.add("selected");
-  } else {
-    activeFilters.splice(idx, 1);
-    btn.classList.remove("selected");
-  }
-
-  updateFilterResetBtn();
-  updateFilterActiveCount();
-  applyFilters();
-}
-
-/* ═══════════════════════════════════════════════
-   دالة مساعدة — Multi-Tag Support
+   دالة مساعدة — استخراج tags المنتج
    ═══════════════════════════════════════════════ */
 function getProductTags(p) {
-  if (Array.isArray(p.tags) && p.tags.length > 0) {
-    return p.tags;
-  }
-  if (p.tag && typeof p.tag === "string" && p.tag.trim() !== "") {
-    return [p.tag];
-  }
+  if (Array.isArray(p.tags) && p.tags.length > 0) { return p.tags; }
+  if (p.tag && typeof p.tag === "string" && p.tag.trim() !== "") { return [p.tag]; }
   return [];
 }
 
 /* ═══════════════════════════════════════════════
-   تطبيق الفلاتر
+   استخراج الصفوف الدراسية من المنتجات
    ═══════════════════════════════════════════════ */
+function buildGradesList() {
+  var found = {};
+  var i, j, tags;
 
-function applyFilters() {
-  var q = document.getElementById("searchInput").value.trim().toLowerCase();
+  for (i = 0; i < allProducts.length; i++) {
+    tags = getProductTags(allProducts[i]);
+    for (j = 0; j < tags.length; j++) {
+      found[tags[j]] = true;
+    }
+  }
+
+  return GRADES_ORDER.filter(function (g) {
+    return found[g] === true;
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   حفظ وتحميل الصفوف المختارة
+   ═══════════════════════════════════════════════ */
+function saveSelectedGrades() {
+  lsSetJson("selectedGrades", selectedGrades);
+}
+
+function loadSelectedGrades() {
+  var saved = lsGetJson("selectedGrades");
+  if (saved && Array.isArray(saved)) {
+    selectedGrades = saved;
+  } else {
+    selectedGrades = [];
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   فلترة المنتجات بناءً على الصفوف المختارة + البحث
+   ═══════════════════════════════════════════════ */
+function applyGradeFilter() {
+  var searchEl = document.getElementById("searchInput");
+  var q        = searchEl ? searchEl.value.trim().toLowerCase() : "";
+  var words    = q.split(/\s+/).filter(function (w) { return w.length > 0; });
 
   filteredProducts = allProducts.filter(function (p) {
 
-    /* فلتر البحث النصي */
-    if (q !== "" && p.name.toLowerCase().indexOf(q) === -1) {
-      return false;
-    }
-
-    /* فلتر التاجات — AND: كل الفلاتر المختارة لازم تكون موجودة */
-    if (activeFilters.length > 0) {
-      var productTags = getProductTags(p);
+    /* فلتر الصفوف الدراسية */
+    if (selectedGrades.length > 0) {
+      var tags  = getProductTags(p);
+      var match = false;
       var i, j;
-
-      for (i = 0; i < activeFilters.length; i++) {
-        var found = false;
-        for (j = 0; j < productTags.length; j++) {
-          if (productTags[j] === activeFilters[i]) {
-            found = true;
+      for (i = 0; i < tags.length; i++) {
+        for (j = 0; j < selectedGrades.length; j++) {
+          if (tags[i] === selectedGrades[j]) {
+            match = true;
             break;
           }
         }
-        if (!found) { return false; }
+        if (match) { break; }
+      }
+      if (!match) { return false; }
+    }
+
+    /* Smart Search — AND-based */
+    if (words.length > 0) {
+      var name = p.name.toLowerCase();
+      var k;
+      for (k = 0; k < words.length; k++) {
+        if (name.indexOf(words[k]) === -1) { return false; }
       }
     }
 
@@ -290,37 +288,200 @@ function applyFilters() {
   renderProducts();
 }
 
-function resetFilters() {
-  activeFilters = [];
+/* ═══════════════════════════════════════════════
+   منطقة العميل — Customer Area
+   ═══════════════════════════════════════════════ */
 
-  var tags = document.querySelectorAll(".filter-tag");
+function toggleCustomerArea() {
+  var panel = document.getElementById("customerPanel");
+  if (panel.classList.contains("open")) {
+    closeCustomerArea();
+  } else {
+    closeCart();
+    renderCustomerArea();
+    panel.classList.add("open");
+    document.getElementById("overlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeCustomerArea() {
+  document.getElementById("customerPanel").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+function renderCustomerArea() {
+  var grades = buildGradesList();
+  var body   = document.getElementById("customerBody");
+  var footer = document.getElementById("customerFooter");
+
+  var gradesHtml = "";
   var i;
-  for (i = 0; i < tags.length; i++) {
-    tags[i].classList.remove("selected");
+
+  for (i = 0; i < grades.length; i++) {
+    var g          = grades[i];
+    var isSelected = selectedGrades.indexOf(g) !== -1;
+    gradesHtml +=
+      '<button class="grade-btn' + (isSelected ? " selected" : "") + '" ' +
+        'onclick="toggleGrade(this, \'' + escHtml(g) + '\')">' +
+        escHtml(g) +
+      '</button>';
   }
 
-  updateFilterResetBtn();
-  updateFilterActiveCount();
-  applyFilters();
+  body.innerHTML =
+    '<div class="customer-section">' +
+      '<div class="customer-section-title">📚 اختر الصف الدراسي</div>' +
+      '<div class="customer-section-hint">يمكنك اختيار صف واحد أو أكثر — الفلترة فورية</div>' +
+      '<div class="grades-wrap" id="gradesWrap">' +
+        gradesHtml +
+      '</div>' +
+    '</div>' +
+    '<div class="customer-section" id="customerHistorySection">' +
+      '<div class="customer-section-title">📋 الطلبيات السابقة</div>' +
+      renderHistoryInCustomer() +
+    '</div>';
+
+  updateCustomerFooter();
 }
 
-function updateFilterResetBtn() {
-  var btn = document.getElementById("filterReset");
-  if (activeFilters.length > 0) {
-    btn.classList.remove("hidden");
+function renderHistoryInCustomer() {
+  if (orderHistory.length === 0) {
+    return '<div class="panel-empty" style="padding:20px 0;">' +
+           '<span class="empty-icon" style="font-size:2rem;">📋</span>' +
+           '<p>لا توجد طلبيات سابقة</p>' +
+           '</div>';
+  }
+
+  var html  = '<div class="customer-history-list">';
+  var limit = Math.min(orderHistory.length, 5);
+  var i;
+
+  for (i = 0; i < limit; i++) {
+    var order = orderHistory[i];
+    html +=
+      '<div class="customer-order-item">' +
+        '<div class="customer-order-head">' +
+          '<span class="customer-order-name">' + escHtml(order.buyerName) + '</span>' +
+          '<span class="customer-order-total">' +
+            fmt(order.total) + ' ' + escHtml(order.currency) +
+          '</span>' +
+        '</div>' +
+        '<div class="customer-order-meta">' +
+          escHtml(order.date) + ' — ' + escHtml(order.time) +
+        '</div>' +
+        '<div class="customer-order-actions">' +
+          '<button class="btn-order-action btn-order-resend" ' +
+            'onclick="resendOrder(' + i + ')">📤 إعادة إرسال</button>' +
+          '<button class="btn-order-action btn-order-img" ' +
+            'onclick="downloadImage(' + i + ')">🖼️ صورة</button>' +
+          '<button class="btn-order-action btn-order-del" ' +
+            'onclick="deleteOrderFromCustomer(' + i + ')">🗑️ حذف</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  if (orderHistory.length > 5) {
+    html +=
+      '<button class="btn-show-all-history" onclick="showFullHistory()">' +
+        '📋 عرض كل الطلبيات (' + orderHistory.length + ')' +
+      '</button>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+/* اختيار/إلغاء صف — فلترة فورية */
+function toggleGrade(btn, grade) {
+  var idx = selectedGrades.indexOf(grade);
+  if (idx === -1) {
+    selectedGrades.push(grade);
+    btn.classList.add("selected");
   } else {
-    btn.classList.add("hidden");
+    selectedGrades.splice(idx, 1);
+    btn.classList.remove("selected");
+  }
+  saveSelectedGrades();
+  updateCustomerAreaBadge();
+  updateCustomerFooter();
+
+  /* فلترة فورية */
+  applyGradeFilter();
+}
+
+function updateCustomerFooter() {
+  var footer = document.getElementById("customerFooter");
+  if (!footer) { return; }
+
+  if (selectedGrades.length > 0) {
+    footer.innerHTML =
+      '<div class="customer-selected-info">' +
+        '✅ تم اختيار ' + selectedGrades.length + ' صف دراسي' +
+        ' — عرض ' + filteredProducts.length + ' منتج' +
+      '</div>' +
+      '<button class="btn-clear-grades" onclick="clearGrades()">' +
+        '✕ إلغاء الاختيار وعرض الكل' +
+      '</button>';
+  } else {
+    footer.innerHTML =
+      '<div class="customer-selected-info" style="color:#888;">' +
+        'لم يتم اختيار أي صف — يتم عرض كل المنتجات (' + allProducts.length + ')' +
+      '</div>';
+  }
+  footer.style.display = "block";
+}
+
+function clearGrades() {
+  selectedGrades = [];
+  saveSelectedGrades();
+  updateCustomerAreaBadge();
+
+  var btns = document.querySelectorAll(".grade-btn");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    btns[i].classList.remove("selected");
+  }
+
+  applyGradeFilter();
+  updateCustomerFooter();
+}
+
+function updateCustomerAreaBadge() {
+  var badge = document.getElementById("customerBadge");
+  if (!badge) { return; }
+  if (selectedGrades.length > 0) {
+    badge.textContent = selectedGrades.length;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
   }
 }
 
-function updateFilterActiveCount() {
-  var el = document.getElementById("filterActiveCount");
-  if (activeFilters.length > 0) {
-    el.textContent = activeFilters.length;
-    el.classList.remove("hidden");
-  } else {
-    el.classList.add("hidden");
-  }
+function deleteOrderFromCustomer(idx) {
+  showConfirm({
+    icon:    "🗑️",
+    title:   "حذف الطلبية",
+    msg:     "هل تريد حذف هذه الطلبية نهائياً؟",
+    yesText: "نعم احذفها",
+    onYes:   function () {
+      orderHistory.splice(idx, 1);
+      saveHistory();
+      updateHistoryBadge();
+      var section = document.getElementById("customerHistorySection");
+      if (section) {
+        section.innerHTML =
+          '<div class="customer-section-title">📋 الطلبيات السابقة</div>' +
+          renderHistoryInCustomer();
+      }
+      showToast("تم حذف الطلبية", "info");
+    }
+  });
+}
+
+function showFullHistory() {
+  closeCustomerArea();
+  setTimeout(function () { toggleHistory(); }, 350);
 }
 
 /* ═══════════════════════════════════════════════
@@ -337,45 +498,50 @@ function renderProducts() {
       '<span class="big-emoji">😕</span>' +
       "<p>لا توجد نتائج مطابقة</p>" +
       "</div>";
-    info.textContent = "عرض 0 من اصل " + allProducts.length + " منتج";
+    if (info) {
+      info.textContent = "عرض 0 من اصل " + allProducts.length + " منتج";
+    }
     return;
   }
 
-  if (filteredProducts.length === allProducts.length) {
-    info.textContent = "عرض " + allProducts.length + " منتج";
-  } else {
-    info.textContent =
-      "عرض " + filteredProducts.length +
-      " من اصل " + allProducts.length + " منتج";
+  if (info) {
+    if (filteredProducts.length === allProducts.length) {
+      info.textContent = "عرض " + allProducts.length + " منتج";
+    } else {
+      info.textContent =
+        "عرض " + filteredProducts.length +
+        " من اصل " + allProducts.length + " منتج";
+    }
   }
 
-  var html = "";
-  var i;
+  var parts = [];
+  var i, product, idx;
 
   for (i = 0; i < filteredProducts.length; i++) {
-    var product = filteredProducts[i];
-    var idx     = allProducts.indexOf(product);
+    product = filteredProducts[i];
+    idx     = allProducts.indexOf(product);
 
-    html +=
+    parts.push(
       '<div class="product-card" id="card-' + idx + '">' +
-        '<div class="product-name">'  + escHtml(product.name)  + "</div>" +
+        '<div class="product-name">'  + escHtml(product.name)  + '</div>' +
         '<div class="product-price">' + fmt(product.price) +
-          " " + escHtml(storeData.currency) + "</div>" +
+          ' ' + escHtml(storeData.currency) + '</div>' +
         '<div class="product-controls">' +
           '<div class="qty-wrapper">' +
             '<button class="qty-btn" onclick="chQty(' + idx + ', -1)">-</button>' +
             '<input class="qty-input" type="number" ' +
               'id="qty-' + idx + '" value="1" min="1" max="999">' +
             '<button class="qty-btn" onclick="chQty(' + idx + ', 1)">+</button>' +
-          "</div>" +
+          '</div>' +
           '<button class="add-to-cart-btn" onclick="addToCart(' + idx + ')">' +
-            "اضف للسلة" +
-          "</button>" +
-        "</div>" +
-      "</div>";
+            'اضف للسلة' +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
-  grid.innerHTML = html;
+  grid.innerHTML = parts.join("");
 }
 
 /* ═══════════════════════════════════════════════
@@ -383,13 +549,13 @@ function renderProducts() {
    ═══════════════════════════════════════════════ */
 
 var doSearch = debounce(function () {
-  applyFilters();
+  applyGradeFilter();
 }, 300);
 
 function clearSearch() {
   document.getElementById("searchInput").value = "";
   document.getElementById("searchClear").classList.remove("show");
-  applyFilters();
+  applyGradeFilter();
   document.getElementById("searchInput").focus();
 }
 
@@ -532,51 +698,52 @@ function renderCartBody() {
     return;
   }
 
-  var itemsHtml = "";
-  var i;
+  var parts = [];
+  var i, item, sub;
 
   for (i = 0; i < cart.length; i++) {
-    var item = cart[i];
-    var sub  = item.price * item.quantity;
-    itemsHtml +=
+    item = cart[i];
+    sub  = item.price * item.quantity;
+    parts.push(
       '<div class="cart-item">' +
         '<button class="cart-item-del" onclick="removeFromCart(' + i + ')">✕</button>' +
-        '<div class="cart-item-name">'  + escHtml(item.name)  + "</div>" +
+        '<div class="cart-item-name">'  + escHtml(item.name)  + '</div>' +
         '<div class="cart-item-price">السعر: ' +
-          fmt(item.price) + " " + escHtml(storeData.currency) +
-        "</div>" +
+          fmt(item.price) + ' ' + escHtml(storeData.currency) +
+        '</div>' +
         '<div class="cart-item-row">' +
           '<div class="qty-mini">' +
             '<button class="qty-mini-btn" onclick="updateQty(' + i + ', -1)">-</button>' +
-            '<div class="qty-mini-val">' + item.quantity + "</div>" +
+            '<div class="qty-mini-val">' + item.quantity + '</div>' +
             '<button class="qty-mini-btn" onclick="updateQty(' + i + ', 1)">+</button>' +
-          "</div>" +
+          '</div>' +
           '<div class="cart-item-subtotal">' +
-            fmt(sub) + " " + escHtml(storeData.currency) +
-          "</div>" +
-        "</div>" +
-      "</div>";
+            fmt(sub) + ' ' + escHtml(storeData.currency) +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
-  body.innerHTML = itemsHtml;
+  body.innerHTML = parts.join("");
 
   footer.innerHTML =
     '<div class="cart-summary">' +
-      "<span>عدد الاصناف</span>" +
-      "<span>" + cart.length + " صنف</span>" +
-    "</div>" +
+      '<span>عدد الاصناف</span>' +
+      '<span>' + cart.length + ' صنف</span>' +
+    '</div>' +
     '<div class="cart-grand-total">' +
       '<span class="label">الاجمالي الكلي</span>' +
       '<span class="amount">' +
-        fmt(cartTotal()) + " " + escHtml(storeData.currency) +
-      "</span>" +
-    "</div>" +
+        fmt(cartTotal()) + ' ' + escHtml(storeData.currency) +
+      '</span>' +
+    '</div>' +
     '<div class="cart-actions">' +
       '<button class="btn-whatsapp" onclick="showCheckout()">' +
-        "📤 ارسال الطلبية عبر واتساب" +
-      "</button>" +
+        '📤 ارسال الطلبية عبر واتساب' +
+      '</button>' +
       '<button class="btn-danger-outline" onclick="clearCart()">🗑️ تفريغ السلة</button>' +
-    "</div>";
+    '</div>';
 
   footer.style.display = "block";
 }
@@ -590,6 +757,7 @@ function toggleCart() {
   if (panel.classList.contains("open")) {
     closeCart();
   } else {
+    closeCustomerArea();
     closeHistory();
     renderCartBody();
     panel.classList.add("open");
@@ -610,6 +778,7 @@ function toggleHistory() {
     closeHistory();
   } else {
     closeCart();
+    closeCustomerArea();
     renderHistory();
     panel.classList.add("open");
     document.getElementById("overlay").classList.add("show");
@@ -626,6 +795,7 @@ function closeHistory() {
 function closeAllPanels() {
   closeCart();
   closeHistory();
+  closeCustomerArea();
 }
 
 /* ═══════════════════════════════════════════════
@@ -986,6 +1156,7 @@ function loadHistory() {
 
 function updateHistoryBadge() {
   var badge = document.getElementById("historyBadge");
+  if (!badge) { return; }
   badge.textContent = orderHistory.length;
   if (orderHistory.length === 0) {
     badge.classList.add("hidden");
@@ -1027,7 +1198,7 @@ function clearAllHistory() {
 }
 
 /* ═══════════════════════════════════════════════
-   عرض لوحة السجل
+   عرض لوحة السجل الكاملة
    ═══════════════════════════════════════════════ */
 
 function renderHistory() {
@@ -1045,7 +1216,7 @@ function renderHistory() {
     return;
   }
 
-  var html = "";
+  var parts = [];
   var i;
 
   for (i = 0; i < orderHistory.length; i++) {
@@ -1076,7 +1247,7 @@ function renderHistory() {
 
     var metaPhone = order.buyerPhone ? " - " + escHtml(order.buyerPhone) : "";
 
-    html +=
+    parts.push(
       '<div class="order-card">' +
         '<div class="order-card-head">' +
           "<div>" +
@@ -1109,10 +1280,11 @@ function renderHistory() {
               'onclick="deleteOrder(' + i + ')">🗑️ حذف</button>' +
           "</div>" +
         "</div>" +
-      "</div>";
+      "</div>"
+    );
   }
 
-  body.innerHTML = html;
+  body.innerHTML = parts.join("");
 
   footer.innerHTML =
     '<button class="btn-danger-outline" onclick="clearAllHistory()">' +
@@ -1164,14 +1336,15 @@ function closeConfirm() {
 }
 
 /* ═══════════════════════════════════════════════
-   Feature 2 — Onboarding (First-Time Experience)
+   Onboarding — أول زيارة
+   بعد انتهاء/تخطي الجولة → تفتح منطقة العميل
    ═══════════════════════════════════════════════ */
 
 var ONBOARDING_STEPS = [
   {
-    icon:  "🏷️",
-    title: "اختار الصف الدراسي",
-    desc:  "اضغط على زر «فلاتر» واختار صف ابنك أو بنتك عشان تشوف كتبه بس"
+    icon:  "👤",
+    title: "منطقة العميل",
+    desc:  "اضغط على زر «منطقتي» واختار الصف الدراسي لابنك أو بنتك عشان تشوف كتبه بس"
   },
   {
     icon:  "🛒",
@@ -1181,7 +1354,7 @@ var ONBOARDING_STEPS = [
   {
     icon:  "📤",
     title: "ابعت طلبك على واتساب",
-    desc:  "افتح السلة من الزر الجانبي، ثم اضغط «ارسال الطلبية» وهيفتح واتساب تلقائيًا"
+    desc:  "افتح السلة من الزر اللي في أعلى الشاشة، ثم اضغط «ارسال الطلبية» وهيفتح واتساب تلقائيًا"
   }
 ];
 
@@ -1190,25 +1363,21 @@ var onboardingCurrentStep = 0;
 function initOnboarding() {
   var done = lsGet("onboardingDone");
   if (done === "1") { return; }
-
-  setTimeout(function () {
-    showOnboarding(0);
-  }, 800);
+  setTimeout(function () { showOnboarding(0); }, 800);
 }
 
 function showOnboarding(stepIndex) {
   onboardingCurrentStep = stepIndex || 0;
   renderOnboardingStep();
-
   var overlay = document.getElementById("onboardingOverlay");
   overlay.classList.add("show");
   document.body.style.overflow = "hidden";
 }
 
 function renderOnboardingStep() {
-  var step     = ONBOARDING_STEPS[onboardingCurrentStep];
-  var total    = ONBOARDING_STEPS.length;
-  var isLast   = onboardingCurrentStep === total - 1;
+  var step   = ONBOARDING_STEPS[onboardingCurrentStep];
+  var total  = ONBOARDING_STEPS.length;
+  var isLast = onboardingCurrentStep === total - 1;
 
   document.getElementById("obIcon").textContent  = step.icon;
   document.getElementById("obTitle").textContent = step.title;
@@ -1223,7 +1392,7 @@ function renderOnboardingStep() {
   document.getElementById("obDots").innerHTML = dotsHtml;
 
   var nextBtn = document.getElementById("obNextBtn");
-  nextBtn.textContent = isLast ? "🚀 ابدأ الآن" : "التالي ←";
+  nextBtn.textContent = isLast ? "🚀 اختار الصف الدراسي" : "التالي ←";
 
   var skipBtn = document.getElementById("obSkipBtn");
   skipBtn.style.visibility = isLast ? "hidden" : "visible";
@@ -1235,15 +1404,24 @@ function nextOnboardingStep() {
     onboardingCurrentStep += 1;
     renderOnboardingStep();
   } else {
-    skipOnboarding();
+    finishOnboarding();
   }
 }
 
 function skipOnboarding() {
+  finishOnboarding();
+}
+
+function finishOnboarding() {
   lsSet("onboardingDone", "1");
   var overlay = document.getElementById("onboardingOverlay");
   overlay.classList.remove("show");
   document.body.style.overflow = "";
+
+  /* بعد إغلاق الجولة → فتح منطقة العميل لاختيار الصفوف */
+  setTimeout(function () {
+    toggleCustomerArea();
+  }, 400);
 }
 
 function replayOnboarding() {
@@ -1253,13 +1431,13 @@ function replayOnboarding() {
 }
 
 /* ═══════════════════════════════════════════════
-   Feature 3 — دليل المستخدم (User Guide)
+   دليل المستخدم (User Guide)
    ═══════════════════════════════════════════════ */
 
 var GUIDE_STEPS = [
   {
-    icon: "🏷️",
-    text: "اضغط على زر «فلاتر» واختار صف ابنك أو بنتك عشان تشوف كتبه بس"
+    icon: "👤",
+    text: "اضغط على زر «منطقتي» واختار الصف الدراسي لابنك أو بنتك عشان تشوف كتبه بس"
   },
   {
     icon: "📦",
@@ -1335,10 +1513,8 @@ function closeHelpMenu() {
 
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* تحميل المنتجات */
   loadProducts();
 
-  /* البحث */
   document.getElementById("searchInput").addEventListener("input", function () {
     var clearBtn = document.getElementById("searchClear");
     if (this.value.length > 0) {
@@ -1349,37 +1525,31 @@ document.addEventListener("DOMContentLoaded", function () {
     doSearch();
   });
 
-  /* إغلاق Modal الشراء عند الضغط خارجها */
   document.getElementById("checkoutModal").addEventListener("click", function (e) {
-    if (e.target === document.getElementById("checkoutModal")) {
-      closeCheckout();
-    }
+    if (e.target === this) { closeCheckout(); }
   });
 
-  /* زر تأكيد */
   document.getElementById("cfmYes").addEventListener("click", function () {
     if (typeof confirmCallback === "function") { confirmCallback(); }
     closeConfirm();
   });
 
-  /* لوحة المفاتيح */
   document.addEventListener("keydown", function (e) {
     var key = e.key;
 
     if (key === "Escape") {
-      if (document.getElementById("onboardingOverlay") &&
-          document.getElementById("onboardingOverlay").classList.contains("show")) {
-        skipOnboarding();
-      } else if (document.getElementById("guideModal") &&
-                 document.getElementById("guideModal").classList.contains("show")) {
+      if (document.getElementById("onboardingOverlay").classList.contains("show")) {
+        finishOnboarding();
+      } else if (document.getElementById("guideModal").classList.contains("show")) {
         closeGuide();
-      } else if (document.getElementById("helpMenu") &&
-                 document.getElementById("helpMenu").classList.contains("show")) {
+      } else if (document.getElementById("helpMenu").classList.contains("show")) {
         closeHelpMenu();
       } else if (document.getElementById("checkoutModal").classList.contains("show")) {
         closeCheckout();
       } else if (document.getElementById("confirmOverlay").classList.contains("show")) {
         closeConfirm();
+      } else if (document.getElementById("customerPanel").classList.contains("open")) {
+        closeCustomerArea();
       } else if (document.getElementById("cartPanel").classList.contains("open")) {
         closeCart();
       } else if (document.getElementById("historyPanel").classList.contains("open")) {
@@ -1396,7 +1566,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  /* إزالة أخطاء الحقول عند الكتابة */
   document.getElementById("buyerName").addEventListener("input", function () {
     this.classList.remove("input-err");
     document.getElementById("nameErr").classList.remove("show");
@@ -1407,7 +1576,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("phoneErr").classList.remove("show");
   });
 
-  /* إغلاق قائمة المساعدة عند الضغط خارجها */
   document.addEventListener("click", function (e) {
     var menu    = document.getElementById("helpMenu");
     var fabHelp = document.getElementById("fabHelp");

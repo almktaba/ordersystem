@@ -6,7 +6,7 @@
   <title>المكتبة - نظام الطلبيات</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="products_v20260419182217.js"></script>
+  <script src="products_v20260422181930.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,21 +19,14 @@
        ═══════════════════════════════════════════ -->
   <header class="header">
     <div class="header-content">
-
-      <!-- اسم المتجر -->
       <div class="store-title" id="storeName">جارٍ التحميل...</div>
-
-      <!-- أدوات الهيدر -->
       <div class="header-tools">
-
-        <!-- ✅ زر السلة في الهيدر -->
         <button class="header-cart-btn" onclick="toggleCart()" title="سلة المشتريات">
           <span class="header-cart-icon">🛒</span>
           <span class="header-cart-label">السلة</span>
           <span class="header-cart-total" id="cartTotalHeader">0.00</span>
           <span class="header-cart-badge hidden" id="cartBadge">0</span>
         </button>
-
       </div>
     </div>
   </header>
@@ -41,37 +34,18 @@
   <!-- البحث الثابت -->
   <div class="search-sticky">
     <div class="search-container">
-
-      <!-- شريط البحث + زر الفلاتر -->
       <div class="search-bar-row">
         <div class="search-wrapper">
           <span class="search-icon">🔍</span>
           <input type="text"
                  class="search-input"
                  id="searchInput"
-                 placeholder="ابحث عن منتج..."
+                 placeholder="ابحث عن منتج... (مثال: دراسات الرابع)"
                  autocomplete="off">
           <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
         </div>
-        <button class="btn-filter-toggle" id="filterToggle" onclick="toggleFilters()">
-          <span>فلاتر</span>
-          <span class="filter-arrow" id="filterArrow">🔽</span>
-          <span class="filter-active-count hidden" id="filterActiveCount">0</span>
-        </button>
       </div>
-
-      <!-- منطقة الفلاتر -->
-      <div class="filters-area hidden" id="filtersArea">
-        <div class="filters-tags-wrap" id="filtersTagsWrap">
-          <!-- يتم توليدها من JS -->
-        </div>
-        <button class="btn-filter-reset hidden" id="filterReset" onclick="resetFilters()">
-          ✕ إعادة تعيين الفلاتر
-        </button>
-      </div>
-
     </div>
-    <!-- عدد النتائج -->
     <div class="results-info" id="resultsInfo"></div>
   </div>
 
@@ -93,8 +67,20 @@
     <div class="footer-text" id="footerText"></div>
   </footer>
 
-  <!-- خلفية معتمة للوحات الجانبية -->
+  <!-- خلفية معتمة -->
   <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+  <!-- ═══════════════════════════════════════════
+       لوحة منطقة العميل
+       ═══════════════════════════════════════════ -->
+  <aside class="side-panel customer-panel" id="customerPanel">
+    <div class="panel-header customer-panel-header">
+      <h2>👤 منطقتي</h2>
+      <button class="panel-close" onclick="closeCustomerArea()">✕</button>
+    </div>
+    <div class="panel-body" id="customerBody"></div>
+    <div class="panel-footer" id="customerFooter" style="display:none;"></div>
+  </aside>
 
   <!-- ═══════════════════════════════════════════
        لوحة السلة
@@ -109,11 +95,11 @@
   </aside>
 
   <!-- ═══════════════════════════════════════════
-       لوحة السجل
+       لوحة السجل الكاملة
        ═══════════════════════════════════════════ -->
   <aside class="side-panel history-panel" id="historyPanel">
     <div class="panel-header">
-      <h2>📋 الطلبيات السابقة</h2>
+      <h2>📋 كل الطلبيات السابقة</h2>
       <button class="panel-close" onclick="closeHistory()">✕</button>
     </div>
     <div class="panel-body" id="historyBody"></div>
@@ -170,11 +156,11 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       Feature 2 — Onboarding Overlay
+       Onboarding Overlay
        ═══════════════════════════════════════════ -->
   <div class="onboarding-overlay" id="onboardingOverlay">
     <div class="onboarding-card">
-      <span class="ob-icon" id="obIcon">🏷️</span>
+      <span class="ob-icon" id="obIcon">👤</span>
       <div class="ob-title" id="obTitle"></div>
       <div class="ob-desc"  id="obDesc"></div>
       <div class="ob-dots"  id="obDots"></div>
@@ -190,7 +176,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       Feature 3 — دليل المستخدم
+       دليل المستخدم
        ═══════════════════════════════════════════ -->
   <div class="guide-overlay" id="guideModal">
     <div class="guide-modal">
@@ -207,16 +193,14 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       Toast
-       ═══════════════════════════════════════════ -->
+  <!-- Toast -->
   <div class="toast-wrap" id="toastWrap"></div>
 
   <!-- ═══════════════════════════════════════════
        الأزرار العائمة (FABs)
        ═══════════════════════════════════════════ -->
 
-  <!-- ✅ زر واتساب للمجموعة -->
+  <!-- زر واتساب للمجموعة -->
   <a class="fab-whatsapp-group"
      href="https://chat.whatsapp.com/HDxgTtrJfb2FGRulY26YiB"
      target="_blank"
@@ -245,17 +229,16 @@
     </button>
   </div>
 
-  <!-- زر سجل الطلبيات -->
-  <button class="fab-history"
-          onclick="toggleHistory()"
-          title="الطلبيات السابقة">
-    📋
-    <span class="badge hidden" id="historyBadge">0</span>
+  <!-- ✅ زر منطقة العميل — بدلاً من زر الطلبيات السابقة -->
+  <button class="fab-customer"
+          onclick="toggleCustomerArea()"
+          title="منطقتي">
+    👤
+    <span class="fab-customer-label">منطقتي</span>
+    <span class="badge hidden" id="customerBadge">0</span>
   </button>
 
-  <!-- ═══════════════════════════════════════════
-       السكريبت الرئيسي
-       ═══════════════════════════════════════════ -->
+  <!-- السكريبت الرئيسي -->
   <script src="app.js"></script>
 
 </body>
