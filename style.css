@@ -1326,6 +1326,47 @@ button { cursor: pointer; font-family: 'Cairo', sans-serif; }
 
 .fab-customer:active { transform: scale(0.95); }
 
+/* 🎯 زر التدريبات العائم — أعلى زر منطقتي */
+.fab-exercises {
+  position: fixed;
+  bottom: 92px;
+  right: 20px;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 18px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #3a2a00;
+  text-decoration: none;
+  font-family: 'Cairo', sans-serif;
+  box-shadow: 0 4px 18px rgba(245,158,11,0.45);
+  cursor: pointer;
+  transition: all var(--tr);
+  white-space: nowrap;
+}
+
+.fab-exercises:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 24px rgba(245,158,11,0.55);
+}
+
+.fab-exercises:active { transform: scale(0.95); }
+
+.fab-exercises-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.fab-exercises-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .fab-customer-label {
   font-size: 0.9rem;
   font-weight: 700;
@@ -1669,7 +1710,8 @@ a.help-menu-item {
 }
 
 @media (max-width: 480px) {
-  .store-title              { font-size: 1.1rem; }
+  .header                   { padding: 10px 12px; }
+  .store-title              { font-size: 1rem; }
   .header-cart-label        { display: none; }
   .header-cart-btn          { padding: 7px 12px; gap: 6px; }
   .header-cart-total        { min-width: 50px; font-size: 0.9rem; }
@@ -1679,6 +1721,8 @@ a.help-menu-item {
   .fab-help                 { width: 48px; height: 48px; bottom: 76px; left: 14px; }
   .fab-customer             { height: 48px; padding: 0 14px; bottom: 20px; right: 14px; border-radius: 24px; }
   .fab-customer-label       { font-size: 0.82rem; }
+  .fab-exercises            { height: 48px; padding: 0 14px; bottom: 78px; right: 14px; border-radius: 24px; }
+  .fab-exercises-label      { font-size: 0.82rem; }
   .help-menu                { left: 14px; min-width: 170px; }
   .onboarding-card          { padding: 28px 20px 22px; }
   .ob-icon                  { font-size: 3rem; }
@@ -1785,6 +1829,7 @@ html[data-theme="dark"] {
 
 [data-theme="dark"] .fab-whatsapp-group,
 [data-theme="dark"] .fab-customer,
+[data-theme="dark"] .fab-exercises,
 [data-theme="dark"] .fab-help {
   box-shadow: 0 6px 20px rgba(0,0,0,0.55);
 }
@@ -1906,8 +1951,13 @@ html[data-theme="dark"] {
 }
 
 @media (max-width: 480px) {
-  .header-icon-btn { padding: 7px 10px; border-radius: 20px; }
-  .header-icon-btn .hi-label { display: none; }
-  .header-icon-btn span[aria-hidden="true"] { font-size: 1.15rem; }
+  .header-icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    justify-content: center;
+  }
+  .header-icon-btn span[aria-hidden="true"] { font-size: 1.35rem; }
 }
 
