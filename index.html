@@ -2,10 +2,29 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>المكتبة - نظام الطلبيات</title>
+  <meta name="description" content="اطلب ملازمك وأدواتك المكتبية من المكتبة عبر واتساب، وتدرّب مجانًا على الاختبارات التفاعلية.">
+  <meta name="theme-color" content="#128C7E" id="themeColorMeta">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="المكتبة">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    /* تطبيق المظهر قبل الرسم حتى لا يظهر وميض أبيض */
+    (function () {
+      try {
+        var mode = localStorage.getItem("theme") || "system";
+        var dark = mode === "dark" ||
+          (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+      } catch (e) {}
+    })();
+  </script>
   <script src="products_v20260511234705.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -21,6 +40,13 @@
     <div class="header-content">
       <div class="store-title" id="storeName">جارٍ التحميل...</div>
       <div class="header-tools">
+        <a class="header-icon-btn" href="exercises.html" title="التدريبات المجانية" aria-label="التدريبات المجانية">
+          <span aria-hidden="true">🎯</span>
+          <span class="hi-label">تدريبات</span>
+        </a>
+        <button class="header-icon-btn" id="themeBtn" onclick="toggleTheme()" title="تبديل المظهر" aria-label="تبديل المظهر الفاتح والغامق">
+          <span id="themeIcon" aria-hidden="true">🌙</span>
+        </button>
         <button class="header-cart-btn" onclick="toggleCart()" title="سلة المشتريات">
           <span class="header-cart-icon">🛒</span>
           <span class="header-cart-label">السلة</span>
@@ -41,6 +67,7 @@
                  class="search-input"
                  id="searchInput"
                  placeholder="ابحث عن منتج... (مثال: دراسات الرابع)"
+                 aria-label="ابحث عن منتج"
                  autocomplete="off">
           <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
         </div>
@@ -163,6 +190,7 @@
       <span class="ob-icon" id="obIcon">👤</span>
       <div class="ob-title" id="obTitle"></div>
       <div class="ob-desc"  id="obDesc"></div>
+      <div class="ob-extra" id="obExtra"></div>
       <div class="ob-dots"  id="obDots"></div>
       <div class="ob-actions">
         <button class="ob-btn-next" id="obNextBtn" onclick="nextOnboardingStep()">
@@ -189,6 +217,25 @@
         <button class="ob-btn-next" onclick="closeGuide()">
           ✅ فهمت، هبدأ!
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       Modal تثبيت التطبيق
+       ═══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="installModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>📲 تثبيت التطبيق</h3>
+        <button class="modal-x" onclick="closeInstallModal()">✕</button>
+      </div>
+      <div class="modal-body" id="installBody"></div>
+      <div class="modal-foot">
+        <button class="btn-primary" id="installNowBtn" onclick="installApp()" style="display:none;">
+          📲 تثبيت الآن
+        </button>
+        <button class="btn-secondary" onclick="closeInstallModal()">إغلاق</button>
       </div>
     </div>
   </div>
@@ -226,6 +273,14 @@
     <button class="help-menu-item" onclick="replayOnboarding()">
       <span class="hmi-icon">🎓</span>
       <span>إعادة الجولة التعريفية</span>
+    </button>
+    <a class="help-menu-item" href="exercises.html">
+      <span class="hmi-icon">🎯</span>
+      <span>التدريبات المجانية</span>
+    </a>
+    <button class="help-menu-item" id="installMenuItem" onclick="showInstallModal()">
+      <span class="hmi-icon">📲</span>
+      <span>تثبيت التطبيق</span>
     </button>
   </div>
 

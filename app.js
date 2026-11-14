@@ -12,6 +12,8 @@ var cart             = [];
 var orderHistory     = [];
 var confirmCallback  = null;
 var selectedGrades   = [];
+var deferredInstallPrompt = null;
+var installModalOpen = false;
 
 /* ═══════════════════════════════════════════════
    قائمة الصفوف الدراسية (من الأدنى للأعلى)
@@ -118,6 +120,211 @@ function lsSetJson(key, val) {
 }
 
 /* ═══════════════════════════════════════════════
+   🌙 المظهر — فاتح / غامق / حسب النظام
+   ═══════════════════════════════════════════════ */
+
+function getStoredThemeMode() {
+  var mode = lsGet("theme");
+  return (mode === "light" || mode === "dark" || mode === "system") ? mode : "system";
+}
+
+function systemPrefersDark() {
+  return !!(window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+
+function isDarkNow() {
+  var mode = getStoredThemeMode();
+  return mode === "dark" || (mode === "system" && systemPrefersDark());
+}
+
+function applyTheme() {
+  var dark = isDarkNow();
+
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+
+  var icon = document.getElementById("themeIcon");
+  if (icon) { icon.textContent = dark ? "☀️" : "🌙"; }
+
+  var btn = document.getElementById("themeBtn");
+  if (btn) {
+    btn.setAttribute("aria-pressed", String(dark));
+    btn.title = dark ? "التبديل إلى المظهر الفاتح" : "التبديل إلى المظهر الغامق";
+    btn.setAttribute("aria-label", btn.title);
+  }
+
+  var meta = document.getElementById("themeColorMeta");
+  if (meta) { meta.setAttribute("content", dark ? "#0e1620" : "#128C7E"); }
+}
+
+function toggleTheme() {
+  var dark = document.documentElement.getAttribute("data-theme") === "dark";
+  lsSet("theme", dark ? "light" : "dark");
+  applyTheme();
+  showToast(dark ? "تم تفعيل المظهر الفاتح ☀️" : "تم تفعيل المظهر الغامق 🌙", "info");
+}
+
+function initTheme() {
+  applyTheme();
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", function () {
+        if (getStoredThemeMode() === "system") { applyTheme(); }
+      });
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   📲 تثبيت التطبيق على الهاتف (PWA)
+   ═══════════════════════════════════════════════ */
+
+function isStandalone() {
+  return (window.matchMedia &&
+    window.matchMedia("(display-mode: standalone)").matches) ||
+    window.navigator.standalone === true;
+}
+
+function isIOSDevice() {
+  var ua = navigator.userAgent || "";
+  return /iphone|ipad|ipod/i.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function updateInstallUI() {
+  var installed = isStandalone();
+
+  var menuItem = document.getElementById("installMenuItem");
+  if (menuItem) {
+    menuItem.style.display = installed ? "none" : "";
+    menuItem.hidden = installed;
+  }
+
+  renderOnboardingExtra();
+
+  /* لو النافذة مفتوحة ووصل حدث التثبيت، نحدّث محتواها فورًا */
+  if (installModalOpen) { renderInstallModalContent(); }
+}
+
+function installStepsHtml() {
+  var steps = isIOSDevice()
+    ? [
+        "افتح الموقع في متصفح سفاري",
+        "اضغط زر المشاركة ⬆️ في الأسفل",
+        "اختر «إضافة إلى الشاشة الرئيسية»",
+        "اضغط «إضافة» وستجد الأيقونة على شاشتك"
+      ]
+    : [
+        "افتح الموقع في متصفح كروم",
+        "اضغط قائمة المتصفح ⋮ في الأعلى",
+        "اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»",
+        "اضغط «تثبيت» وستجد الأيقونة على شاشتك"
+      ];
+
+  var html = '<ol class="install-steps">';
+  var i;
+  for (i = 0; i < steps.length; i++) {
+    html +=
+      '<li><span class="istep-num">' + (i + 1) + "</span>" +
+      "<span>" + escHtml(steps[i]) + "</span></li>";
+  }
+  html += "</ol>";
+  return html;
+}
+
+function installHintShort() {
+  return isIOSDevice()
+    ? "من سفاري: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»."
+    : "من كروم: اضغط قائمة المتصفح ⋮ ثم «تثبيت التطبيق».";
+}
+
+function installApp() {
+  if (isStandalone()) {
+    showToast("التطبيق مثبّت على جهازك بالفعل ✅", "info");
+    return;
+  }
+
+  /* مفيش حدث تثبيت متاح → نعرض الخطوات اليدوية */
+  if (!deferredInstallPrompt) {
+    showInstallModal(true);
+    return;
+  }
+
+  var promptEvent = deferredInstallPrompt;
+  deferredInstallPrompt = null;
+
+  closeInstallModal();
+
+  try {
+    promptEvent.prompt();
+  } catch (err) {
+    showInstallModal(true);
+    return;
+  }
+
+  promptEvent.userChoice.then(function (choice) {
+    if (choice && choice.outcome === "accepted") {
+      showToast("تم تثبيت التطبيق بنجاح 🎉", "success");
+    } else {
+      showToast("يمكنك التثبيت في أي وقت من قائمة المساعدة", "info");
+    }
+    updateInstallUI();
+  });
+}
+
+/* محتوى نافذة التثبيت — يتبدّل تلقائيًا حسب إمكانية التثبيت بضغطة زر */
+function renderInstallModalContent() {
+  var body      = document.getElementById("installBody");
+  var accept    = document.getElementById("installNowBtn");
+  var installed = isStandalone();
+  var oneClick  = !installed && !!deferredInstallPrompt;
+
+  if (!body) { return; }
+
+  if (installed) {
+    body.innerHTML =
+      '<p style="line-height:1.9;">✅ التطبيق مثبّت على جهازك بالفعل، وتجده على الشاشة الرئيسية باسم <b>المكتبة</b>.</p>' +
+      '<p class="install-note">لو حذفت الأيقونة، تقدر تعيد التثبيت من قائمة المساعدة في أي وقت.</p>';
+  } else if (oneClick) {
+    /* متاح التثبيت بضغطة واحدة → بدون أي خطوات */
+    body.innerHTML =
+      '<p style="line-height:1.9; text-align:center;">كل اللي محتاجه ضغطة واحدة على زر <b>«تثبيت الآن»</b>، وبعدها اضغط <b>«تثبيت»</b> في نافذة المتصفح.</p>' +
+      '<p class="install-note">التطبيق المثبّت يفتح أسرع، ويعمل حتى مع ضعف الإنترنت.</p>';
+  } else {
+    /* المتصفح مش بيسمح بالتثبيت المباشر → نعرض الخطوات */
+    body.innerHTML =
+      '<p style="line-height:1.8;">لتثبيت المكتبة على شاشتك الرئيسية اتبع الخطوات:</p>' +
+      installStepsHtml() +
+      '<p class="install-note">التطبيق المثبّت يفتح أسرع، ويعمل حتى مع ضعف الإنترنت.</p>';
+  }
+
+  if (accept) { accept.style.display = oneClick ? "" : "none"; }
+}
+
+function showInstallModal(force) {
+  closeHelpMenu();
+
+  /* لو التثبيت متاح بضغطة زر → نفتح نافذة المتصفح الأصلية على طول بدون نافذة الخطوات */
+  if (!force && !isStandalone() && deferredInstallPrompt) {
+    installApp();
+    return;
+  }
+
+  installModalOpen = true;
+  renderInstallModalContent();
+
+  document.getElementById("installModal").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeInstallModal() {
+  var modal = document.getElementById("installModal");
+  if (!modal) { return; }
+  installModalOpen = false;
+  modal.classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+/* ═══════════════════════════════════════════════
    Feature 1 — نظام تحديث المنتجات (Auto Update)
    ═══════════════════════════════════════════════ */
 
@@ -198,6 +405,7 @@ function initUI() {
   updateCartBadge();
   updateHistoryBadge();
   updateCustomerAreaBadge();
+  updateInstallUI();
 
   applyGradeFilter();
 }
@@ -528,10 +736,10 @@ function renderProducts() {
           ' ' + escHtml(storeData.currency) + '</div>' +
         '<div class="product-controls">' +
           '<div class="qty-wrapper">' +
-            '<button class="qty-btn" onclick="chQty(' + idx + ', -1)">-</button>' +
-            '<input class="qty-input" type="number" ' +
+            '<button class="qty-btn" aria-label="تقليل الكمية" onclick="chQty(' + idx + ', -1)">-</button>' +
+            '<input class="qty-input" type="number" aria-label="الكمية" ' +
               'id="qty-' + idx + '" value="1" min="1" max="999">' +
-            '<button class="qty-btn" onclick="chQty(' + idx + ', 1)">+</button>' +
+            '<button class="qty-btn" aria-label="زيادة الكمية" onclick="chQty(' + idx + ', 1)">+</button>' +
           '</div>' +
           '<button class="add-to-cart-btn" onclick="addToCart(' + idx + ')">' +
             'اضف للسلة' +
@@ -1355,6 +1563,12 @@ var ONBOARDING_STEPS = [
     icon:  "📤",
     title: "ابعت طلبك على واتساب",
     desc:  "افتح السلة من الزر اللي في أعلى الشاشة، ثم اضغط «ارسال الطلبية» وهيفتح واتساب تلقائيًا"
+  },
+  {
+    icon:  "📲",
+    title: "ثبّت التطبيق على شاشتك",
+    desc:  "أضف المكتبة إلى الشاشة الرئيسية لتفتحها بضغطة واحدة وتعمل بسرعة حتى مع ضعف الإنترنت",
+    install: true
   }
 ];
 
@@ -1383,6 +1597,8 @@ function renderOnboardingStep() {
   document.getElementById("obTitle").textContent = step.title;
   document.getElementById("obDesc").textContent  = step.desc;
 
+  renderOnboardingExtra();
+
   var dotsHtml = "";
   var i;
   for (i = 0; i < total; i++) {
@@ -1392,10 +1608,33 @@ function renderOnboardingStep() {
   document.getElementById("obDots").innerHTML = dotsHtml;
 
   var nextBtn = document.getElementById("obNextBtn");
-  nextBtn.textContent = isLast ? "🚀 اختار الصف الدراسي" : "التالي ←";
+  nextBtn.textContent = isLast ? "🚀 ابدأ الآن" : "التالي ←";
 
   var skipBtn = document.getElementById("obSkipBtn");
   skipBtn.style.visibility = isLast ? "hidden" : "visible";
+}
+
+/* زر/تنبيه التثبيت داخل خطوة الجولة التعريفية */
+function renderOnboardingExtra() {
+  var extra = document.getElementById("obExtra");
+  if (!extra) { return; }
+
+  var step = ONBOARDING_STEPS[onboardingCurrentStep];
+  if (!step || !step.install) {
+    extra.innerHTML = "";
+    return;
+  }
+
+  if (isStandalone()) {
+    extra.innerHTML =
+      '<div class="ob-install-hint">✅ التطبيق مثبّت على جهازك بالفعل</div>';
+  } else if (deferredInstallPrompt) {
+    extra.innerHTML =
+      '<button type="button" class="ob-install-btn" onclick="installApp()">📲 تثبيت الآن</button>';
+  } else {
+    extra.innerHTML =
+      '<div class="ob-install-hint">' + escHtml(installHintShort()) + "</div>";
+  }
 }
 
 function nextOnboardingStep() {
@@ -1462,6 +1701,14 @@ var GUIDE_STEPS = [
   {
     icon: "💬",
     text: "اضغط «إرسال الطلبية» — واتساب هيفتح وهتلاقي رسالة جاهزة بكل تفاصيل طلبك، بس اضغط إرسال وخلاص!"
+  },
+  {
+    icon: "🎯",
+    text: "من زر «تدريبات» في أعلى الشاشة تفتح صفحة التدريبات المجانية، وتحل الاختبار وتشوف نتيجتك فورًا"
+  },
+  {
+    icon: "📲",
+    text: "لتثبيت التطبيق على شاشتك: من زر المساعدة ❓ اختر «تثبيت التطبيق» واتبع الخطوات"
   }
 ];
 
@@ -1511,9 +1758,30 @@ function closeHelpMenu() {
    تشغيل التطبيق وربط الأحداث
    ═══════════════════════════════════════════════ */
 
+/* التقاط حدث التثبيت من المتصفح (يُسجّل مبكرًا حتى لا يفوتنا الحدث) */
+window.addEventListener("beforeinstallprompt", function (e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallUI();
+});
+
+window.addEventListener("appinstalled", function () {
+  deferredInstallPrompt = null;
+  updateInstallUI();
+  showToast("تم تثبيت التطبيق بنجاح 🎉", "success");
+});
+
 document.addEventListener("DOMContentLoaded", function () {
 
+  initTheme();
   loadProducts();
+
+  /* تسجيل عامل الخدمة لتشغيل التطبيق دون اتصال */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
 
   document.getElementById("searchInput").addEventListener("input", function () {
     var clearBtn = document.getElementById("searchClear");
@@ -1529,6 +1797,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.target === this) { closeCheckout(); }
   });
 
+  document.getElementById("installModal").addEventListener("click", function (e) {
+    if (e.target === this) { closeInstallModal(); }
+  });
+
   document.getElementById("cfmYes").addEventListener("click", function () {
     if (typeof confirmCallback === "function") { confirmCallback(); }
     closeConfirm();
@@ -1542,6 +1814,8 @@ document.addEventListener("DOMContentLoaded", function () {
         finishOnboarding();
       } else if (document.getElementById("guideModal").classList.contains("show")) {
         closeGuide();
+      } else if (document.getElementById("installModal").classList.contains("show")) {
+        closeInstallModal();
       } else if (document.getElementById("helpMenu").classList.contains("show")) {
         closeHelpMenu();
       } else if (document.getElementById("checkoutModal").classList.contains("show")) {
