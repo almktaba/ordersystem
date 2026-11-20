@@ -2,13 +2,16 @@
    الاستراتيجية: الشبكة أولًا (حتى تظهر تحديثات الملازم والتدريبات فورًا)،
    وإن تعذر الاتصال نعرض آخر نسخة محفوظة. */
 
-const CACHE = 'almaktaba-v8';
+const CACHE = 'almaktaba-v0';
 const SHELL = [
   './',
   'index.html',
   'css/style.css',
   'js/app.js',
   'quizzes/q-quiz-yg4ruj.html',
+   'quizzes/q-1-yieydr.html',
+   'quizzes/q-2-spwnxy.html',
+   'quizzes/q-3-qtxg23.html',
   'manifest.json',
   'icons/icon.svg',
   'icons/icon-192.png',
