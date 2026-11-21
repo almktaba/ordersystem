@@ -1,3 +1,14 @@
 {
-  "quizzes": []
+  "quizzes": [
+    {
+      "id": "q-4",
+      "title": "الدراسات الاجتماعية – بنك اسئلة الدراسات الاجتماعية - الوحدة الاولي",
+      "description": "",
+      "grade": "p4",
+      "subject": "social",
+      "file": "quizzes/quiz.html?id=q-4",
+      "questions": 30,
+      "minutes": 10
+    }
+  ]
 }

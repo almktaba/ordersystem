@@ -2,7 +2,7 @@
    الاستراتيجية: الشبكة أولًا (حتى تظهر تحديثات الملازم والتدريبات فورًا)،
    وإن تعذر الاتصال نعرض آخر نسخة محفوظة. */
 
-const CACHE = 'almaktaba-v8';
+const CACHE = 'almaktaba-v9';
 const SHELL = [
   './',
   'index.html',
@@ -39,6 +39,20 @@ const stripSearch = (url) => {
   return u.toString();
 };
 
+/* الأدوات المحلية ليست جزءًا من التطبيق؛ لا يعترضها الـ SW ولا يخزّنها */
+const LOCAL_TOOLS = /\/(products-generator\.html|generator-guide\.html|start\.bat|stop\.bat)$/;
+
+/* الرجوع إلى index.html مسموح فقط لانتقالات التطبيق نفسه، لا لأي صفحة أخرى */
+function isAppNavigation(req) {
+  if (req.mode !== 'navigate') return false;
+  const scope = new URL(self.location.href);
+  scope.pathname = scope.pathname.replace(/sw\.js$/, '');
+  const u = new URL(req.url);
+  return u.pathname === scope.pathname ||
+    u.pathname === scope.pathname.replace(/\/$/, '') ||
+    u.pathname === scope.pathname + 'index.html';
+}
+
 function fetchWithTimeout(req, ms) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
@@ -57,7 +71,7 @@ async function networkFirst(req) {
     // استجابة خطأ من الشبكة (مثل 502) لا تمنع العمل بدون اتصال إن كانت نسخة محفوظة موجودة
     const cached = await cache.match(key);
     if (cached) return cached;
-    if (req.mode === 'navigate') {
+    if (isAppNavigation(req)) {
       const index = await cache.match('index.html');
       if (index) return index;
     }
@@ -65,7 +79,7 @@ async function networkFirst(req) {
   } catch (_) {
     const hit = await cache.match(key);
     if (hit) return hit;
-    if (req.mode === 'navigate') {
+    if (isAppNavigation(req)) {
       const index = await cache.match('index.html');
       if (index) return index;
     }
@@ -90,6 +104,7 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
+  if (sameOrigin && LOCAL_TOOLS.test(url.pathname)) { return; }
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (isFont) {
     event.respondWith(staleWhileRevalidate(req));
