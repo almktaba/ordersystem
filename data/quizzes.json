@@ -39,6 +39,26 @@
       "file": "quizzes/quiz.html?id=q-3-qtxg23",
       "questions": 15,
       "minutes": 15
+    },
+    {
+      "id": "q-1-8kcvzn",
+      "title": "اختبار رياضيات 1ع الوحدة الاولي",
+      "description": "",
+      "grade": "m1",
+      "subject": "math",
+      "file": "quizzes/quiz.html?id=q-1-8kcvzn",
+      "questions": 24,
+      "minutes": 15
+    },
+    {
+      "id": "q-4",
+      "title": "الدراسات الاجتماعية – بنك اسئلة الدراسات الاجتماعية - الوحدة الاولي",
+      "description": "",
+      "grade": "p4",
+      "subject": "social",
+      "file": "quizzes/quiz.html?id=q-4",
+      "questions": 15,
+      "minutes": 15
     }
   ]
 }
