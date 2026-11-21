@@ -2,13 +2,13 @@
   "quizzes": [
     {
       "id": "q-4",
-      "title": " بنك اسئلة الدراسات الاجتماعية -  الوحدة الاولي",
+      "title": "بنك اسئلة الدراسات الاجتماعية - الوحدة الثانية",
       "description": "",
       "grade": "p4",
       "subject": "social",
       "file": "quizzes/quiz.html?id=q-4",
       "questions": 15,
-      "minutes": 10
+      "minutes": 15
     }
   ]
 }

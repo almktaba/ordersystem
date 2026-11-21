@@ -2,7 +2,7 @@
    الاستراتيجية: الشبكة أولًا (حتى تظهر تحديثات الملازم والتدريبات فورًا)،
    وإن تعذر الاتصال نعرض آخر نسخة محفوظة. */
 
-const CACHE = 'almaktaba-v10';
+const CACHE = 'almaktaba-v11';
 const SHELL = [
   './',
   'index.html',
