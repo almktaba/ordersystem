@@ -108,13 +108,18 @@ var main = document.querySelector('main');
     if (metaReady) { try { await metaReady; } catch (e) {} }
     var qp0 = new URLSearchParams(location.search);
     var quizId = qp0.get('quiz') || qp0.get('id') || window.__quizId || '';
-    var appUrl = new URL('../index.html', location.href);
+    var appUrl = new URL('../', location.href);
     appUrl.search = '';
     appUrl.hash = 'quizzes/' + encodeURIComponent(quizId);
     var url = appUrl.href;
     var data = { title: shareTitle || document.title, text: shareText(), url: url };
     if (navigator.share) {
-      try { await navigator.share(data); return; }
+      try {
+        /* نافذة المشاركة النظامية قد تمرّر url فقط إلى واتساب وتتجاهل text؛
+           نضع العبارة والرابط في نص واحد لضمان وصولهما معًا. */
+        await navigator.share({ title: data.title, text: data.text + '\n' + data.url });
+        return;
+      }
       catch (e) { if (e && e.name === 'AbortError') return; }
     }
     openShareSheet(data);

@@ -1243,7 +1243,9 @@
     const data = { title: x.title, text: quizShareText(x), url: quizLink(x) };
     if (navigator.share) {
       try {
-        await navigator.share(data);
+        /* نافذة المشاركة النظامية قد تمرّر url فقط إلى واتساب وتتجاهل text؛
+           نضع العبارة والرابط في نص واحد لضمان وصولهما معًا. */
+        await navigator.share({ title: data.title, text: `${data.text}\n${data.url}` });
         return;
       } catch (err) {
         if (err && err.name === 'AbortError') return;
