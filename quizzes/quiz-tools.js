@@ -44,11 +44,11 @@ var main = document.querySelector('main');
     var u = encodeURIComponent(data.url);
     var tx = encodeURIComponent(data.text);
     var apps = [
-      ['واتساب', '💬', 'https://wa.me/?text=' + encodeURIComponent(data.text + ' ' + data.url)],
+      ['واتساب', '💬', 'https://wa.me/?text=' + encodeURIComponent(data.text + '\n' + data.url)],
       ['فيسبوك', '📘', 'https://www.facebook.com/sharer/sharer.php?u=' + u],
       ['تيليجرام', '✈️', 'https://t.me/share/url?url=' + u + '&text=' + tx],
       ['إكس', '𝕏', 'https://twitter.com/intent/tweet?url=' + u + '&text=' + tx],
-      ['البريد الإلكتروني', '✉️', 'mailto:?subject=' + tx + '&body=' + u]
+      ['البريد الإلكتروني', '✉️', 'mailto:?subject=' + tx + '&body=' + encodeURIComponent(data.text + '\n' + data.url)]
     ];
     var back = document.createElement('div');
     back.className = 'quiz-share-backdrop';
@@ -105,13 +105,14 @@ var main = document.querySelector('main');
   });
 
   share.addEventListener('click', async function () {
+    if (metaReady) { try { await metaReady; } catch (e) {} }
     var qp0 = new URLSearchParams(location.search);
     var quizId = qp0.get('quiz') || qp0.get('id') || window.__quizId || '';
     var appUrl = new URL('../index.html', location.href);
     appUrl.search = '';
     appUrl.hash = 'quizzes/' + encodeURIComponent(quizId);
     var url = appUrl.href;
-    var data = { title: document.title, text: 'جرّب هذا الاختبار في المكتبة: ' + document.title, url: url };
+    var data = { title: shareTitle || document.title, text: shareText(), url: url };
     if (navigator.share) {
       try { await navigator.share(data); return; }
       catch (e) { if (e && e.name === 'AbortError') return; }
@@ -120,6 +121,15 @@ var main = document.querySelector('main');
   });
 
   var left = 0, tick = null, mins = 0, promo = null;
+  var shareTitle = '', shareGrade = '', metaReady = null;
+
+  /* نص المشاركة: «اختبار تفاعلي + اسم الاختبار + الصف» من بيانات الرابط نفسه */
+  function shareText() {
+    var title = String(shareTitle || document.title || '').replace(/\s+/g, ' ').trim();
+    var grade = String(shareGrade || '').replace(/\s+/g, ' ').trim();
+    return 'اختبار تفاعلي' + (title ? ' ' + title : '') + (grade ? ' ' + grade : '');
+  }
+
   function paint() {
     var m = Math.floor(left / 60), s = left % 60;
     timer.textContent = '⏱ ' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
@@ -203,11 +213,12 @@ var main = document.querySelector('main');
   var qid = qp.get('quiz') || qp.get('id') || window.__quizId || '';
   if (forced > 0) { mins = forced; startTimer(); }
 
-  getCatalog()
+  metaReady = getCatalog()
     .then(function (j) { window.__quizCatalog = j; return j; })
     .then(function (j) {
       var list = (j && j.quizzes) || [];
       var found = (qid && list.filter(function (x) { return x && x.id === qid; })[0]) || null;
+      shareTitle = found && found.title ? String(found.title) : document.title;
       if (!(forced > 0)) {
         mins = found && Number(found.minutes) > 0 ? Number(found.minutes) : 0;
         startTimer();
@@ -221,6 +232,9 @@ var main = document.querySelector('main');
       return fetch('../data/products.json', { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (p) {
+          var grades = (p && p.grades) || [];
+          var g = grades.filter(function (x) { return x && x.id === grade; })[0];
+          shareGrade = g && g.name ? String(g.name) : '';
           var products = (p && p.products) || [];
           var needle = norm('بنك اسئلة ابجد');
           var ok = products.some(function (x) {

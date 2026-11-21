@@ -1190,17 +1190,24 @@
     return url.href;
   }
 
+  // نص المشاركة يُبنى من معرّف الاختبار في الرابط: العنوان والصف تُقرأ من البيانات المحمّلة
+  function quizShareText(x) {
+    const title = String(x.title || '').replace(/\s+/g, ' ').trim();
+    const grade = (x.grades || []).map(gradeName).filter(Boolean).join('، ');
+    return `اختبار تفاعلي${title ? ' ' + title : ''}${grade ? ' ' + grade : ''}`;
+  }
+
   // نافذة اختيار التطبيق: تُفتح بدل النسخ التلقائي حين لا تتوفر مشاركة النظام
   function openShareSheet(data) {
     state.share = data;
     const u = encodeURIComponent(data.url);
     const tx = encodeURIComponent(data.text);
     const apps = [
-      { label: 'واتساب', icon: '💬', href: `https://wa.me/?text=${encodeURIComponent(`${data.text} ${data.url}`)}` },
+      { label: 'واتساب', icon: '💬', href: `https://wa.me/?text=${encodeURIComponent(`${data.text}\n${data.url}`)}` },
       { label: 'فيسبوك', icon: '📘', href: `https://www.facebook.com/sharer/sharer.php?u=${u}` },
       { label: 'تيليجرام', icon: '✈️', href: `https://t.me/share/url?url=${u}&text=${tx}` },
       { label: 'إكس', icon: '𝕏', href: `https://twitter.com/intent/tweet?url=${u}&text=${tx}` },
-      { label: 'البريد الإلكتروني', icon: '✉️', href: `mailto:?subject=${tx}&body=${u}` },
+      { label: 'البريد الإلكتروني', icon: '✉️', href: `mailto:?subject=${tx}&body=${encodeURIComponent(`${data.text}\n${data.url}`)}` },
     ];
     const links = apps
       .map(
@@ -1233,7 +1240,7 @@
   async function shareQuiz(id) {
     const x = state.quizMap.get(id);
     if (!x) return;
-    const data = { title: x.title, text: `جرّب هذا الاختبار في المكتبة: ${x.title}`, url: quizLink(x) };
+    const data = { title: x.title, text: quizShareText(x), url: quizLink(x) };
     if (navigator.share) {
       try {
         await navigator.share(data);
