@@ -1,0 +1,44 @@
+{
+  "quizzes": [
+    {
+      "id": "q-quiz-yg4ruj",
+      "title": "بنك اسئلة الوحدة الاولي - العلوم",
+      "description": "",
+      "grade": "p4",
+      "subject": "science",
+      "file": "quizzes/quiz.html?id=q-quiz-yg4ruj",
+      "questions": 15,
+      "minutes": 15
+    },
+    {
+      "id": "q-1-yieydr",
+      "title": "بنك اسئلة الوحدة الثانية- مستوي سهل- العلوم",
+      "description": "مراحل دورة حياة الحشرات (البيضة، اليرقة، الشرنقة، الحشرة البالغة)",
+      "grade": "p4",
+      "subject": "science",
+      "file": "quizzes/quiz.html?id=q-1-yieydr",
+      "questions": 15,
+      "minutes": 15
+    },
+    {
+      "id": "q-2-spwnxy",
+      "title": "بنك اسئلة الوحدة الثانية - مستوي متوسط - العلوم",
+      "description": "مراحل نمو الحشرات والتحول الكامل",
+      "grade": "p4",
+      "subject": "science",
+      "file": "quizzes/quiz.html?id=q-2-spwnxy",
+      "questions": 15,
+      "minutes": 15
+    },
+    {
+      "id": "q-3-qtxg23",
+      "title": "بنك اسئلة الوحدة الثانية- مستوي صعب- العلوم",
+      "description": "دورة حياة الحشرات ومراحل نموها",
+      "grade": "p4",
+      "subject": "science",
+      "file": "quizzes/quiz.html?id=q-3-qtxg23",
+      "questions": 15,
+      "minutes": 15
+    }
+  ]
+}
