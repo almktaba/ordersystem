@@ -713,6 +713,16 @@
             <button type="button" class="btn secondary small" data-act="copy" data-id="${esc(ip.address || '')}">نسخ</button>
           </div>
           ${ip.accountName ? `<p class="fine">اسم الحساب: ${esc(ip.accountName)}</p>` : ''}
+          ${
+            ip.phone
+              ? `<p class="fine mt">أو حوّل إلى رقم انستاباي (إن كنت لا تستخدم المعرّف):</p>
+                 <div class="pay-address">
+                   <code>${esc(ip.phone)}</code>
+                   <button type="button" class="btn secondary small" data-act="copy" data-id="${esc(ip.phone)}" data-label="الرقم">نسخ</button>
+                 </div>
+                 <p class="fine">افتح انستاباي، ابحث بالرقم، وحوّل المبلغ إلى ${esc(ip.accountName || 'المكتبة')}.</p>`
+              : ''
+          }
           <ol class="pay-steps">
             <li>حوّل المبلغ إلى العنوان أعلاه.</li>
             <li>اضغط «إرسال الطلب عبر واتساب».</li>
@@ -1458,7 +1468,7 @@
     send: sendOrder,
     async copy(el) {
       const ok = await copyText(el.dataset.id);
-      toast(ok ? 'تم نسخ العنوان' : 'تعذر النسخ، انسخه يدويًا');
+      toast(ok ? `تم نسخ ${el.dataset.label || 'العنوان'}` : 'تعذر النسخ، انسخه يدويًا');
     },
 
     // الخطوات الأولى
